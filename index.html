@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Technology 9 | MR. WARE | TECH TEACHER</title>
+<meta name="description" content="Projects and practice for Technology 9 at Brimmer and May.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@700&family=Lilita+One&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FCF1DE;
+    --panel: #FFFCF5;
+    --ink: #2B2A33;
+    --ink-soft: #5A5663;
+    --orange: #EC7A1C;
+    --yellow: #F7C326;
+    --blue: #2B5FCC;
+    --purple: #6E3FA3;
+    --green: #3D9A4A;
+    --red: #D9452B;
+    --focus: #2B5FCC;
+    /* subject colors: border, and a darker version for text */
+    --science: var(--green);  --science-t: #2E7A38;
+    --tech: var(--blue);      --tech-t: #2B5FCC;
+    --math: var(--orange);    --math-t: #A44F0C;
+    --english: var(--purple); --english-t: #6E3FA3;
+    --music: var(--red);      --music-t: #B5361F;
+    color-scheme: light;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #221F2B;
+      --panel: #2D2938;
+      --ink: #F6EFE2;
+      --ink-soft: #C9C1D3;
+      --orange: #F59A4C;
+      --yellow: #F7C944;
+      --blue: #82A4FF;
+      --purple: #B78BEA;
+      --green: #6CC97A;
+      --red: #F27A62;
+      --focus: #F7C944;
+      --science-t: var(--green); --tech-t: var(--blue); --math-t: var(--orange);
+      --english-t: var(--purple); --music-t: var(--red);
+      color-scheme: dark;
+    }
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 1.0625rem/1.6 "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  }
+  a { color: inherit; }
+  a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; border-radius: 10px; }
+  h1, h2, h3 { font-family: "Lilita One", "Arial Black", "Helvetica Neue", Impact, sans-serif; font-weight: 400; letter-spacing: 0.01em; }
+  .wrap { max-width: 70rem; margin: 0 auto; padding: 0 1.5rem; }
+  [hidden] { display: none !important; }
+
+  /* Hand-drawn edge on a pseudo-element so text stays crisp */
+  .sketch { position: relative; isolation: isolate; }
+  .sketch::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--fill, var(--panel));
+    border: 3px solid var(--c, var(--ink));
+    border-radius: 22px 12px 24px 10px / 12px 24px 10px 22px;
+    filter: url(#rough);
+  }
+  .doodle { filter: url(#rough); }
+
+  .home { display: inline-block; margin-top: 1.5rem; font-weight: 700; color: var(--ink-soft); text-decoration-thickness: 2px; text-underline-offset: 5px; }
+
+  .hero { padding: 2rem 0 1rem; }
+  .kicker { margin: 0 0 0.25rem; font-weight: 700; color: var(--ink-soft); font-size: 1.1rem; }
+  h1 { margin: 0; font-size: clamp(2.6rem, 6.5vw, 4.75rem); line-height: 1.02; }
+  .squiggle { display: block; width: min(100%, 30rem); height: auto; margin: 0.4rem 0 0; }
+  .lede { margin: 1rem 0 0; font-size: clamp(1.25rem, 2.2vw, 1.5rem); line-height: 1.45; font-weight: 700; max-width: 40ch; }
+
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1rem 2rem; align-items: center; }
+  .hero-art { width: clamp(7rem, 16vw, 11rem); height: auto; }
+  .hero .kicker { color: var(--english-t); }
+
+  main section { padding: 2.5rem 0 0; }
+  main h2 { margin: 0 0 0.3rem; font-size: clamp(2.1rem, 4.2vw, 3rem); line-height: 1.05; }
+  .note { margin: 0 0 1.75rem; color: var(--ink-soft); max-width: 55ch; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: 1.6rem; }
+  .card {
+    display: grid; grid-template-rows: auto auto 1fr auto; gap: 0.45rem;
+    padding: 1.6rem 1.6rem 1.4rem; text-decoration: none; transition: transform 0.15s;
+    --c: var(--purple); transform: rotate(-0.8deg);
+  }
+  .card:hover, .card:focus-visible { transform: rotate(0deg) translateY(-3px); }
+  .card .tag { font-weight: 700; color: var(--english-t); }
+  .card h3 { margin: 0; font-size: 1.75rem; line-height: 1.1; }
+  .card p { margin: 0; color: var(--ink-soft); }
+  .card .go { margin-top: 0.4rem; font-weight: 700; color: var(--english-t); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
+  .soon {
+    display: grid; place-content: center; text-align: center; gap: 0.35rem;
+    padding: 1.6rem; min-height: 12rem; transform: rotate(0.6deg);
+    --fill: transparent; --c: var(--ink-soft);
+  }
+  .soon::before { border-style: dashed; }
+  .soon h3 { margin: 0; font-size: 1.4rem; color: var(--ink-soft); }
+  .soon p { margin: 0; color: var(--ink-soft); }
+
+  .links { display: flex; flex-wrap: wrap; gap: 0.9rem; margin: 0; padding: 0; list-style: none; }
+  .links a {
+    display: inline-block; padding: 0.7rem 1.2rem 0.55rem; text-decoration: none;
+    font: 700 1.2rem/1 "Kalam", "Comic Sans MS", "Segoe Print", cursive;
+    --fill: var(--panel); --c: var(--ink);
+  }
+  .links a:hover { --fill: var(--yellow); color: #2B2A33; }
+
+  footer { padding: 4rem 0 3rem; color: var(--ink-soft); font-size: 0.95rem; }
+  footer p { margin: 0; }
+  @media (max-width: 560px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-art { order: -1; width: 6.5rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { .card { transition: none; } }
+</style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="4"/>
+      <feDisplacementMap in="SourceGraphic" scale="3.5"/>
+    </filter>
+  </svg>
+
+  <div class="wrap">
+    <a class="home" href="https://brimmer-tech.github.io/">Back to home</a>
+
+    <header class="hero">
+      <div>
+        <p class="kicker">New to computer science</p>
+        <h1>Technology 9</h1>
+        <svg class="squiggle doodle" viewBox="0 0 420 24" aria-hidden="true">
+          <path d="M4 14 C 40 4, 70 22, 108 12 S 178 4, 214 13 S 288 22, 326 11 S 392 6, 416 14" fill="none" stroke="var(--orange)" stroke-width="6"/>
+        </svg>
+        <p class="lede">Hands-on projects in robotics, coding, and how AI works. No experience needed, just curiosity.</p>
+      </div>
+      <svg class="hero-art doodle" viewBox="0 0 120 120" aria-hidden="true">
+        <path d="M60 14 v14" stroke="var(--purple)" stroke-width="7" stroke-linecap="round"/>
+        <circle cx="60" cy="12" r="7" fill="var(--orange)"/>
+        <rect x="22" y="28" width="76" height="58" rx="14" fill="none" stroke="var(--purple)" stroke-width="7"/>
+        <circle cx="44" cy="54" r="7" fill="var(--purple)"/>
+        <circle cx="76" cy="54" r="7" fill="var(--purple)"/>
+        <path d="M46 72 h28" stroke="var(--purple)" stroke-width="6" stroke-linecap="round"/>
+        <path d="M12 48 v22 M108 48 v22" stroke="var(--purple)" stroke-width="7" stroke-linecap="round"/>
+        <path d="M40 86 v16 M80 86 v16" stroke="var(--purple)" stroke-width="7" stroke-linecap="round"/>
+      </svg>
+    </header>
+
+    <main>
+      <section aria-labelledby="projects">
+        <h2 id="projects">Projects and practice</h2>
+        <p class="note">Pick a project to work on. New ones show up here as we reach them in class.</p>
+        <div class="grid">
+          <a class="card sketch" href="https://brimmer-tech.github.io/tech9/wire_it_code_it.html">
+            <span class="tag">Robotics</span>
+            <h3>Wire It, Then Code It</h3>
+            <p>Build a robot’s circuit, bring it to life with code, then fix robots that come back broken. Your progress saves in your browser so you can pick up where you left off.</p>
+            <span class="go">Open the project</span>
+          </a>
+          <div class="soon sketch">
+            <h3>More projects on the way</h3>
+            <p>Check back as the year goes on.</p>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="links">
+        <h2 id="links">Where we work</h2>
+        <p class="note">The places we use in class for lessons and practice.</p>
+        <ul class="links">
+          <li><a class="sketch" href="https://brilliant.org/">Brilliant</a></li>
+        </ul>
+      </section>
+    </main>
+
+    <footer>
+      <p>Maintained by Mr. Ware, Brimmer and May Computer Science.</p>
+    </footer>
+  </div>
+</body>
+</html>
