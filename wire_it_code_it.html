@@ -355,7 +355,19 @@ body.deck-open{overflow:hidden}
 .freebar{display:none;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
 .free-h{font-family:var(--display);font-weight:700;font-size:1.8rem;margin:0 0 4px}
 #program.free-mode .freebar{display:block}
-#program.free-mode #missionTabs,#program.free-mode #lessonLaunch,#program.free-mode #lessonPanel,#program.free-mode > .progcol > .panel > #brief,#program.free-mode #hintBox,#program.free-mode #progReset{display:none !important}
+#program.free-mode .mission-bar,#program.free-mode #briefBox,#program.free-mode #lessonPanel,#program.free-mode #progReset{display:none !important}
+.mission-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+#program.free-mode .mission-bar{display:none !important}
+#ddMission>summary{max-width:100%}
+#ddMission .mb-label{font-weight:500;color:inherit;opacity:.75}
+#ddMission .dd-panel{width:min(440px,calc(100vw - 40px))}
+#missionTabs{display:flex;flex-direction:column;align-items:stretch;gap:6px;margin:0}
+#missionTabs button{display:flex;justify-content:space-between;gap:10px}
+#missionTabs .grp{margin-top:6px}
+.briefbox{margin:0 0 10px;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel-2)}
+.briefbox>summary{cursor:pointer;font-weight:600;font-size:.95rem}
+.briefbox .brief{margin:6px 0 4px}
+.briefbox .hintbox{margin:6px 0 2px;padding:0;background:transparent}
 .sel{display:flex;align-items:center;gap:6px;font-size:.92rem;font-weight:600}
 .sel select{font:inherit;font-weight:400;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--code-bg);color:var(--ink)}
 .stage-reset{margin-top:14px;padding-top:10px;border-top:1px solid var(--line);text-align:right}
@@ -535,13 +547,18 @@ body.deck-open{overflow:hidden}
           </div>
           <p class="small" style="margin-top:6px">With Place obstacles on, tap the arena to add a block, or tap a block to remove it.</p>
         </div>
-        <div class="missions" id="missionTabs" role="group" aria-label="Missions"></div>
-        <p class="brief" id="brief"></p>
-        <details class="hintbox" id="hintBox" hidden><summary>Need a hint?</summary><p id="hintText"></p></details>
-        <div class="row" id="lessonLaunch" style="margin:0 0 12px">
-          <button class="btn small primary" id="lessonStart">Start the lesson for this mission</button>
-          <span style="font-size:.92rem;color:var(--ink-soft)">New to coding? It walks you through every block.</span>
+        <div class="mission-bar">
+          <details class="dd" id="ddMission">
+            <summary class="btn"><span class="mb-label">Mission:</span> <b id="missionCurrent"></b> <span class="caret" aria-hidden="true">▾</span></summary>
+            <div class="dd-panel missions" id="missionTabs" role="group" aria-label="Missions"></div>
+          </details>
+          <span id="lessonLaunch"><button class="btn small primary" id="lessonStart">Start lesson</button></span>
         </div>
+        <details class="briefbox" id="briefBox" open>
+          <summary>Mission goal</summary>
+          <p class="brief" id="brief"></p>
+          <details class="hintbox" id="hintBox" hidden><summary>Need a hint?</summary><p id="hintText"></p></details>
+        </details>
         <div class="wiring-note" id="wiringNote"></div>
         <div id="blocklyDiv" aria-label="Block editor"></div>
         <div class="row" style="margin-top:10px">
@@ -1505,7 +1522,8 @@ function renderMissionTabs(){
     const b = document.createElement("button");
     b.setAttribute("aria-pressed", i === missionIdx);
     b.innerHTML = esc(m.title) + (completed[m.id] ? '<span class="done" aria-label="' + starsFor(m.id) + ' of 3 stars">' + starText(starsFor(m.id)) + '</span>' : "");
-    b.addEventListener("click", () => selectMission(i));
+    b.addEventListener("click", () => { document.getElementById("ddMission").open = false; selectMission(i); });
+    if (i === missionIdx) document.getElementById("missionCurrent").innerHTML = esc(m.title) + (completed[m.id] ? ' <span class="done">' + starText(starsFor(m.id)) + '</span>' : "");
     box.appendChild(b);
   });
 }
@@ -2838,7 +2856,7 @@ function lessonRender(force){
   const panel = document.getElementById("lessonPanel");
   const on = lessonActive();
   document.getElementById("lessonLaunch").style.display = (on || !LESSONS[M().id]) ? "none" : "flex";
-  document.getElementById("lessonStart").textContent = M().id === "school" ? "Start the guided activity" : "Start the lesson for this mission";
+  document.getElementById("lessonStart").textContent = M().id === "school" ? "Start guided activity" : "Start lesson";
   panel.hidden = !on;
   if (!on){ lessonKey = ""; return; }
   const steps = LESSONS[lesson.id], s = steps[lesson.step], last = steps.length - 1;
