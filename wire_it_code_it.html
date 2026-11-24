@@ -214,8 +214,8 @@ textarea#code{width:100%;min-height:360px;resize:vertical;font:400 14px/1.55 var
   .pin.sel .ring{animation:none}
   .fizzle{animation:none}
 }
-#blocklyDiv{height:480px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--code-bg)}
-@media (max-width:560px){#blocklyDiv{height:420px}}
+#blocklyDiv{height:clamp(280px,calc(100vh - 330px),430px);border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--code-bg)}
+@media (max-width:560px){#blocklyDiv{height:clamp(300px,calc(100vh - 280px),400px)}}
 .progcol{display:flex;flex-direction:column;gap:14px}
 .blocklyTreeLabel{font-family:var(--body);font-weight:600}
 .missions .grp{flex-basis:100%;font-family:var(--display);font-weight:600;font-size:1.05rem;margin:4px 0 0}
@@ -239,7 +239,7 @@ h1{font-size:clamp(1.8rem,3.4vw,2.6rem)}
 .badge{font:600 .82rem/1 var(--mono);padding:4px 7px;border-radius:999px;background:var(--panel-2);color:var(--ink)}
 .dd.ready .badge{background:var(--ok);color:var(--panel)}
 .dd.danger .badge{background:var(--danger);color:var(--panel)}
-.dd-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:30;width:min(380px,calc(100vw - 40px));max-height:min(70vh,560px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:0 12px 32px rgba(0,0,0,.28)}
+.dd-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:200;width:min(380px,calc(100vw - 40px));max-height:min(70vh,560px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:0 12px 32px rgba(0,0,0,.28)}
 .dd.right .dd-panel{left:auto;right:0}
 .dd-panel.guide p{margin:6px 0;font-size:.95rem}
 #benchSvg{max-height:calc(100vh - 230px);min-height:360px}
@@ -304,7 +304,7 @@ h1{font-size:clamp(1.8rem,3.4vw,2.6rem)}
 .who{font-weight:600;padding:7px 12px;border-radius:999px;background:var(--panel);border:1px solid var(--line)}
 .who:empty{display:none}
 .field input[readonly]{opacity:.85}
-.deck{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;background-color:var(--mat);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.deck{position:fixed;inset:0;z-index:300;display:flex;flex-direction:column;background-color:var(--mat);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 body.deck-open{overflow:hidden}
 .deck-stage{flex:1;display:grid;place-items:center;padding:clamp(12px,3vw,32px);overflow:auto}
 .slide{width:min(1100px,100%);background:var(--panel);border:2px solid var(--ink);border-radius:20px;padding:clamp(18px,3vw,40px);box-shadow:8px 8px 0 var(--ink)}
@@ -372,6 +372,10 @@ body.deck-open{overflow:hidden}
 .sel select{font:inherit;font-weight:400;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--code-bg);color:var(--ink)}
 .stage-reset{margin-top:14px;padding-top:10px;border-top:1px solid var(--line);text-align:right}
 .stage-reset .linkbtn{margin:0}
+.title-face{height:1.05em;width:auto;vertical-align:-.16em;margin:0 .04em 0 .06em;filter:drop-shadow(0 3px 4px rgba(0,0,0,.18))}
+.stepper button.locked{color:var(--ink-soft);cursor:not-allowed}
+.stepper button.locked .n{opacity:.6}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:400;width:max-content;max-width:min(580px,calc(100vw - 32px));background:var(--ink);color:var(--panel);padding:12px 16px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.3);font-size:.97rem;line-height:1.4}
 </style>
 </head>
 <body>
@@ -380,7 +384,7 @@ body.deck-open{overflow:hidden}
     <div class="splash-art"><div id="splashHero"></div></div>
     <div class="splash-side">
       <p class="kicker">Robotics lab</p>
-      <h1 class="splash-title">Wire it.<br>Then code it.</h1>
+      <h1 class="splash-title">Wire it. <img class="title-face" src="data:image/png;base64,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" alt="" aria-hidden="true"><br>Then code it.</h1>
       <p class="lede">Build a real robot circuit, bring it to life with code, and fix robots that come back broken.</p>
       <div class="card" id="nameCard">
         <form id="nameForm" novalidate>
@@ -424,6 +428,7 @@ body.deck-open{overflow:hidden}
     <button class="btn primary" id="deckNext">Next →</button>
   </div>
 </div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <div class="wrap" hidden>
   <header>
     <div>
@@ -1418,7 +1423,7 @@ document.getElementById("tutStart").addEventListener("click", () => {
 /* ---------- Stages ---------- */
 let stage = "build";
 function showStage(name){
-  if (!stageUnlocked(name)) return;
+  if (!stageUnlocked(name)){ lockToast(name); return; }
   if (name !== "repair" && repairActive()){ leaveRepair(name); return; }
   stopRun();
   stage = name;
@@ -2070,7 +2075,7 @@ let teacherMode = !!TEACHER, showAnswer = false;
 const repairActive = () => !!repair;
 function saveRepair(){ store.set("wcb.repair", repair); }
 function openRepair(){
-  if (!stageUnlocked("repair")) return;
+  if (!stageUnlocked("repair")){ lockToast("repair"); return; }
   if (tutStep >= 0) tutGo(-1);
   showStage("repair");
 }
@@ -2112,6 +2117,9 @@ function renderRepair(){
     h += '<p class="stepno">Repair shop: ' + n + ' of ' + CASES.length + ' fixed</p><h2 tabindex="-1" id="repairTitle">Robots waiting for repair</h2>';
     h += '<p>Each of these robots came back with one wiring problem. Test it, figure out what’s wrong from how it behaves, then fix it on the bench.</p>';
     h += '<div class="tickets">' + CASES.map(c => '<button class="ticket" data-case="' + c.id + '"><b>' + esc(c.title) + (repaired[c.id] ? ' <span class="done">✓ fixed</span>' : "") + '</b><span>' + esc(c.ticket) + '</span></button>').join("") + '</div>';
+    const realM = MISSIONS.filter(m => m.kind !== "free"), md = realM.filter(m => completed[m.id]).length;
+    h += '<p class="small" style="margin-top:10px">' + (stageUnlocked("free") ? "<b>Free drive is unlocked.</b> Open stage 4 to build anything you like." :
+      "Free drive unlocks when every mission and every repair is done: " + md + " of " + realM.length + " missions, " + n + " of " + CASES.length + " robots fixed.") + '</p>';
     h += '<div class="row" style="margin-top:12px"><button class="btn small" id="repairLeave">Back to my robot</button><button class="linkbtn" id="repairReset" style="margin:0 0 0 auto">Start Repair shop over</button></div>';
     panel.innerHTML = h;
     panel.querySelectorAll(".ticket").forEach(b => b.addEventListener("click", () => enterCase(b.dataset.case)));
@@ -2163,9 +2171,49 @@ function renderRepair(){
   on1("ticketsBtn", () => { repair = { caseId:null }; saveRepair(); renderRepair(); });
   on1("repairLeave", () => leaveRepair("build"));
   renderTabs();
-  drawTD(null, c);
+  drawTD(null, 0, c, tdSimulate(c, {}));
 }
-function drawTD(s, c, note){
+function tdStart(c){ return c.test === "line" ? { x:30, y:90, th:0.18 } : { x:110, y:110, th:0 }; }
+function tdSimulate(c, fx){
+  const s = Object.assign({ vl:0, vr:0, t:0, nextCtl:0, cl:0, cr:0 }, tdStart(c));
+  const script = [[60, 60, 1.6, "Program: drive forward"], [-50, 50, 0.8, "Program: turn LEFT"], [60, 60, 1.4, "Program: drive forward"]];
+  const total = c.test === "line" ? 7 : 4.6, dt = 1 / 240, frames = [];
+  while (s.t < total){
+    let phase = "Program: stop";
+    if (c.test === "line"){
+      phase = "Program: follow the line";
+      if (s.t >= s.nextCtl){
+        s.nextCtl += 0.05;
+        const sens = side => { const y = s.y + Math.sin(s.th) * 16 + Math.cos(s.th) * 10 * side; return Math.abs(y - 90) < 6; };
+        const L = sens(fx.swapLine ? 1 : -1), R = sens(fx.swapLine ? -1 : 1);
+        s.cl = L ? 15 : R ? 55 : 45; s.cr = L ? 55 : R ? 15 : 45;
+      }
+    } else {
+      let acc = 0; s.cl = 0; s.cr = 0;
+      for (const [l, rr, secs, name] of script){ if (s.t < acc + secs){ s.cl = l; s.cr = rr; phase = name; break; } acc += secs; }
+    }
+    let pl = s.cl / 100 * MAXV, pr = s.cr / 100 * MAXV;
+    if (fx.swapMotors){ const t = pl; pl = pr; pr = t; }
+    if (fx.flipL) pl = -pl;
+    if (fx.flipR) pr = -pr;
+    const k = Math.min(1, dt * 10); s.vl += (pl - s.vl) * k; s.vr += (pr - s.vr) * k;
+    const v = (s.vl + s.vr) / 2, w = (s.vr - s.vl) / BASE;
+    s.th -= w * dt;
+    s.x = Math.max(18, Math.min(382, s.x + Math.cos(s.th) * v * dt));
+    s.y = Math.max(18, Math.min(202, s.y + Math.sin(s.th) * v * dt));
+    s.t += dt;
+    if (!frames.length || s.t - frames[frames.length - 1].t >= 1 / 60) frames.push({ x:s.x, y:s.y, th:s.th, t:s.t, phase });
+  }
+  return frames;
+}
+function tdPill(g, text, x, y, color, align){
+  g.font = "600 13px Barlow, sans-serif";
+  const w = g.measureText(text).width + 14, px = align === "center" ? x - w / 2 : x;
+  g.fillStyle = "rgba(255,255,255,.93)"; g.fillRect(px, y, w, 22);
+  g.strokeStyle = color; g.lineWidth = 1.5; g.strokeRect(px + .5, y + .5, w - 1, 21);
+  g.fillStyle = color; g.textBaseline = "middle"; g.fillText(text, px + 7, y + 11.5); g.textBaseline = "alphabetic";
+}
+function drawTD(frames, upto, c, expected, note){
   const cv = document.getElementById("tdCanvas"); if (!cv) return;
   const d = Math.min(2, window.devicePixelRatio || 1);
   if (cv.width !== 400 * d){ cv.width = 400 * d; cv.height = 220 * d; }
@@ -2176,73 +2224,51 @@ function drawTD(s, c, note){
   for (let x = 0; x <= 400; x += 20){ g.beginPath(); g.moveTo(x + .5, 0); g.lineTo(x + .5, 220); g.stroke(); }
   for (let y = 0; y <= 220; y += 20){ g.beginPath(); g.moveTo(0, y + .5); g.lineTo(400, y + .5); g.stroke(); }
   if (c.test === "line"){ g.strokeStyle = "#151515"; g.lineWidth = 12; g.beginPath(); g.moveTo(0, 90); g.lineTo(400, 90); g.stroke(); }
-  const st = s || tdStart(c);
-  if (st.trail && st.trail.length > 1){
-    g.strokeStyle = "rgba(176,106,34,.8)"; g.lineWidth = 2; g.beginPath();
-    st.trail.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke();
+  if (expected && expected.length > 1){
+    g.save(); g.setLineDash([7, 6]); g.strokeStyle = "rgba(46,139,78,.95)"; g.lineWidth = 3; g.beginPath();
+    expected.forEach((f, i) => i ? g.lineTo(f.x, f.y) : g.moveTo(f.x, f.y)); g.stroke(); g.restore();
+    const e = expected[expected.length - 1];
+    g.fillStyle = "rgba(46,139,78,.95)"; g.beginPath(); g.arc(e.x, e.y, 5, 0, 7); g.fill();
   }
+  if (frames && upto > 0){
+    g.strokeStyle = "#B06A22"; g.lineWidth = 3; g.beginPath();
+    for (let i = 0; i <= upto; i++){ const f = frames[i]; i ? g.lineTo(f.x, f.y) : g.moveTo(f.x, f.y); }
+    g.stroke();
+  }
+  const st = frames ? frames[upto] : tdStart(c);
   g.save(); g.translate(st.x, st.y); g.rotate(st.th);
   g.fillStyle = "#1b1b1b"; g.fillRect(-9, -20, 18, 7); g.fillRect(-9, 13, 18, 7);
   g.fillStyle = "#1F7A8C"; g.fillRect(-16, -14, 32, 28);
   g.fillStyle = "#c9ced3"; g.beginPath(); g.arc(12, -5, 3.6, 0, 7); g.fill(); g.beginPath(); g.arc(12, 5, 3.6, 0, 7); g.fill();
-  g.fillStyle = s ? "#7CFF9E" : "#3a3a3a"; g.beginPath(); g.arc(3, 0, 2.5, 0, 7); g.fill();
+  g.fillStyle = frames ? "#7CFF9E" : "#3a3a3a"; g.beginPath(); g.arc(3, 0, 2.5, 0, 7); g.fill();
   g.restore();
-  if (note){
-    g.font = "600 14px Barlow, sans-serif"; const w = g.measureText(note).width + 16;
-    g.fillStyle = "rgba(255,255,255,.92)"; g.fillRect(200 - w/2, 10, w, 26);
-    g.fillStyle = "#B3261E"; g.textBaseline = "middle"; g.fillText(note, 200 - w/2 + 8, 23.5); g.textBaseline = "alphabetic";
-  }
-}
-function tdStart(c){
-  return c.test === "line" ? { x:30, y:90, th:0.18, vl:0, vr:0, t:0, nextCtl:0, cl:0, cr:0, trail:[] }
-                           : { x:150, y:150, th:0, vl:0, vr:0, t:0, cl:0, cr:0, trail:[] };
+  if (frames) tdPill(g, frames[upto].phase, 8, 8, "#16241E");
+  g.save(); g.font = "600 12px Barlow, sans-serif"; g.fillStyle = "rgba(255,255,255,.9)"; g.fillRect(6, 194, 300, 20);
+  g.setLineDash([7, 6]); g.strokeStyle = "rgba(46,139,78,.95)"; g.lineWidth = 3; g.beginPath(); g.moveTo(12, 204); g.lineTo(38, 204); g.stroke();
+  g.setLineDash([]); g.fillStyle = "#16241E"; g.fillText("correctly wired robot", 44, 208);
+  g.strokeStyle = "#B06A22"; g.beginPath(); g.moveTo(170, 204); g.lineTo(196, 204); g.stroke(); g.fillText("this robot", 202, 208);
+  g.restore();
+  if (note) tdPill(g, note, 200, 40, "#B3261E", "center");
 }
 function testDrive(c){
   cancelAnimationFrame(tdRaf);
   const note = document.getElementById("tdNote");
-  const r = analyze();
+  const r = analyze(), expected = tdSimulate(c, {});
   if (!powered || !r.canPower){
-    drawTD(null, c, r.canPower ? "Press Power on first." : "No power: the robot won’t turn on.");
+    drawTD(null, 0, c, expected, r.canPower ? "Press Power on first." : "No power: the robot won’t turn on.");
     note.textContent = r.canPower ? "" : "Nothing happens. Open Circuit check to see why.";
     return;
   }
-  const fx = r.effects, s = tdStart(c);
-  const script = [[60, 60, 1.6], [-50, 50, 0.8], [60, 60, 1.4]];
-  const total = c.test === "line" ? 7 : 4.2;
-  note.textContent = c.test === "line" ? "Testing: follow the line." : "Testing: forward, turn left, forward.";
-  let last = performance.now();
+  const frames = tdSimulate(c, r.effects);
+  note.textContent = "Watch the copper trail. The dashed green line is what a correctly wired robot does.";
+  const t0 = performance.now(), end = frames[frames.length - 1].t;
   (function step(now){
-    const dt0 = Math.min(0.05, (now - last) / 1000); last = now;
-    for (let n = 0; n < 4; n++){
-      const dt = dt0 / 4;
-      if (c.test === "line"){
-        if (s.t >= s.nextCtl){
-          s.nextCtl += 0.05;
-          const sens = side => { const y = s.y + Math.sin(s.th) * 16 + Math.cos(s.th) * 10 * side; return Math.abs(y - 90) < 6; };
-          const L = sens(fx.swapLine ? 1 : -1), R = sens(fx.swapLine ? -1 : 1);
-          s.cl = L ? 15 : R ? 55 : 45; s.cr = L ? 55 : R ? 15 : 45;
-        }
-      } else {
-        let acc = 0; s.cl = 0; s.cr = 0;
-        for (const [l, rr, secs] of script){ if (s.t < acc + secs){ s.cl = l; s.cr = rr; break; } acc += secs; }
-      }
-      let pl = s.cl / 100 * MAXV, pr = s.cr / 100 * MAXV;
-      if (fx.swapMotors){ const t = pl; pl = pr; pr = t; }
-      if (fx.flipL) pl = -pl;
-      if (fx.flipR) pr = -pr;
-      const k = Math.min(1, dt * 10); s.vl += (pl - s.vl) * k; s.vr += (pr - s.vr) * k;
-      const v = (s.vl + s.vr) / 2, w = (s.vr - s.vl) / BASE;
-      s.th -= w * dt;
-      s.x = Math.max(18, Math.min(382, s.x + Math.cos(s.th) * v * dt));
-      s.y = Math.max(18, Math.min(202, s.y + Math.sin(s.th) * v * dt));
-      s.t += dt;
-    }
-    const lt = s.trail[s.trail.length - 1];
-    if (!lt || Math.hypot(lt[0] - s.x, lt[1] - s.y) > 2) s.trail.push([s.x, s.y]);
-    drawTD(s, c);
-    if (s.t < total) tdRaf = requestAnimationFrame(step);
-    else note.textContent = "Test finished. Compare what you saw with what the program asked for.";
-  })(last);
+    const t = (now - t0) / 1000;
+    let i = frames.findIndex(f => f.t >= t); if (i < 0) i = frames.length - 1;
+    drawTD(frames, i, c, expected);
+    if (t < end) tdRaf = requestAnimationFrame(step);
+    else note.textContent = "Test finished. Does the copper trail follow the dashed green path? If not, what’s different?";
+  })(t0);
 }
 
 /* ---------- Progress, save codes, teacher tools ---------- */
@@ -2373,6 +2399,27 @@ function stageUnlocked(name){
   if (name === "free") return !!u.freeOverride || freeReqsMet();
   return false;
 }
+let toastTimer = 0;
+function toast(html){
+  const t = document.getElementById("toast");
+  t.innerHTML = html; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 7000);
+}
+document.addEventListener("click", e => { const t = document.getElementById("toast"); if (!t.hidden && !e.target.closest(".stepper")) t.hidden = true; });
+function lockToast(name){
+  if (!stageUnlocked("program")){
+    toast("<b>This stage is locked.</b> Finish wiring in Build the circuit, then press Power on to unlock it.");
+    return;
+  }
+  if (name === "free"){
+    const left = MISSIONS.filter(m => m.kind !== "free" && !completed[m.id]).map(m => esc(m.title));
+    const fix = CASES.filter(c => !repaired[c.id]).map(c => esc(c.title));
+    let h = "<b>Free drive unlocks after every mission and every repair.</b>";
+    if (left.length) h += "<br>Missions still to finish: " + left.join(", ") + ".";
+    if (fix.length) h += "<br>Robots still to fix: " + fix.join(", ") + ".";
+    toast(h);
+  }
+}
 let freeWasUnlocked = null;
 function renderTabs(){
   const real = MISSIONS.filter(m => m.kind !== "free");
@@ -2383,7 +2430,9 @@ function renderTabs(){
   };
   [["tabBuild","build"],["tabProgram","program"],["tabRepair","repair"],["tabFree","free"]].forEach(([id, n]) => {
     const b = document.getElementById(id), ok = stageUnlocked(n), lock = b.querySelector(".lock");
-    b.disabled = !ok;
+    b.disabled = false;
+    b.classList.toggle("locked", !ok);
+    b.setAttribute("aria-disabled", String(!ok));
     if (lock) lock.textContent = ok ? "" : "(locked)";
     b.title = ok ? "" : msgs[n];
     b.setAttribute("aria-current", stage === n ? "step" : "false");
