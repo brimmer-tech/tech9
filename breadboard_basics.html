@@ -1,0 +1,2559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Breadboard Basics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fredoka:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#DDE9E4; --panel:#FFFFFF; --ink:#16252C; --muted:#4D5F66; --line:#C3D3CC;
+  --accent:#5B3CC4; --accent-ink:#FFFFFF; --accent-soft:#ECE7FB;
+  --good:#0E7A46; --good-soft:#E2F5EA; --bad:#B3261E; --try-bg:#FFF6D6; --try-line:#E2B93B;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11191E; --panel:#1B272D; --ink:#E8F0EC; --muted:#A3B5AE; --line:#2E3F46;
+    --accent:#A48BFF; --accent-ink:#14101F; --accent-soft:#2A2440;
+    --good:#4FD08E; --good-soft:#163326; --bad:#FF8A80; --try-bg:#2E2915; --try-line:#8A7426;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11191E; --panel:#1B272D; --ink:#E8F0EC; --muted:#A3B5AE; --line:#2E3F46;
+  --accent:#A48BFF; --accent-ink:#14101F; --accent-soft:#2A2440;
+  --good:#4FD08E; --good-soft:#163326; --bad:#FF8A80; --try-bg:#2E2915; --try-line:#8A7426;
+  color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px); background:var(--bg)}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif; font-size:1.0625rem; line-height:1.55}
+.wrap{max-width:1240px; margin:0 auto; padding:1.25rem 1rem 2.5rem}
+header h1{font-family:"Fredoka", "Trebuchet MS", sans-serif; font-weight:600; font-size:clamp(2rem, 5vw, 3rem); line-height:1.05; margin:.25rem 0 .35rem; letter-spacing:-.01em}
+header .intro{margin:0 0 1.25rem; color:var(--muted); max-width:60ch}
+.head-row{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.75rem}
+.modes{display:flex; flex-wrap:wrap; gap:.4rem}
+.mode-area{display:flex; flex-direction:column; align-items:flex-end; gap:.45rem}
+.name-area{display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:.4rem; font-size:.98rem}
+.name-area form{display:flex; flex-wrap:wrap; gap:.4rem; align-items:center; justify-content:flex-end}
+.name-area input{width:11rem; font:inherit; padding:.4rem .65rem; border-radius:10px; border:2px solid var(--line); background:var(--panel); color:var(--ink)}
+.name-area button{padding:.4rem .85rem; font-size:.95rem}
+.name-tag{font-family:"Fredoka", "Trebuchet MS", sans-serif; font-weight:600; font-size:1.1rem}
+.name-note{flex-basis:100%; text-align:right; font-size:.85rem; color:var(--muted); margin:0}
+body.teacher .name-area{display:none}
+.start-overlay{z-index:40; background:rgba(10,15,20,.82)}
+.pin-box .name-input{letter-spacing:normal; font-size:1.3rem}
+.linkish{border:none; padding:0; background:none; border-radius:0; text-decoration:underline; font-family:inherit; font-size:.95rem; color:var(--accent)}
+.cert-name{font-family:"Fredoka", "Trebuchet MS", sans-serif; font-weight:600; font-size:2rem; margin:.1rem 0 .3rem !important; max-width:none !important}
+.teacher-bar{display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; margin:0 0 1rem}
+.teacher-bar[hidden]{display:none}
+.keys{margin:0; font-size:.9rem; color:var(--muted); flex-basis:100%}
+.layout{display:grid; gap:1.25rem}
+@media (min-width:1020px){
+  .layout{grid-template-columns:minmax(0,1.65fr) minmax(330px,1fr); align-items:start}
+  .stage{position:sticky; top:calc(env(safe-area-inset-top,0px) + 1rem)}
+}
+.stage{background:var(--panel); border:2px solid var(--line); border-radius:18px; padding:1rem}
+.board-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch}
+#board{display:block; width:100%; min-width:560px; height:auto; touch-action:manipulation}
+.tools{display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; margin-top:.75rem}
+.tools form{display:flex; gap:.4rem; align-items:center; margin-left:auto}
+.tools label{color:var(--muted); font-size:.95rem}
+.tools input{width:6.5rem; font:inherit; padding:.45rem .6rem; border-radius:10px; border:2px solid var(--line); background:var(--bg); color:var(--ink)}
+button{font-family:"Fredoka", "Trebuchet MS", sans-serif; font-weight:500; font-size:1rem; padding:.55rem 1rem; border-radius:999px; border:2px solid var(--accent); background:transparent; color:var(--accent); cursor:pointer}
+button.primary{background:var(--accent); color:var(--accent-ink)}
+button{transition:background-color .12s, color .12s, transform .06s, filter .06s}
+button:not(.primary):not([aria-pressed="true"]):not(.active):hover:not(:disabled){background:color-mix(in srgb, var(--accent) 18%, transparent)}
+button:active:not(:disabled){transform:translateY(1px) scale(.97); filter:brightness(.9)}
+button[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent)}
+button.primary[aria-pressed="true"]{background:var(--accent)}
+button[data-tool][aria-pressed="true"]::before, button[data-r][aria-pressed="true"]::before{content:"✓ "}
+.progress button[aria-pressed]{box-shadow:none}
+button:disabled{opacity:.4; cursor:not-allowed}
+button:focus-visible, input:focus-visible{outline:3px solid var(--accent); outline-offset:2px}
+.readout{margin:.85rem 0 0; padding:.7rem .9rem; border-radius:12px; background:var(--bg); min-height:3.1rem}
+.beep{font-family:"Fredoka", "Trebuchet MS", sans-serif; font-weight:600; color:var(--good)}
+.lesson{background:var(--panel); border:2px solid var(--line); border-radius:18px; padding:1.25rem 1.25rem 1rem}
+.progress{display:flex; flex-wrap:wrap; gap:.35rem; margin-bottom:.75rem}
+.progress button{width:2.1rem; height:2.1rem; padding:0; border-width:2px; font-size:.95rem; border-color:var(--line); color:var(--muted)}
+.progress button.done{border-color:var(--good); color:var(--good)}
+.progress button[aria-current="step"]{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+.count{margin:0; color:var(--muted); font-size:.95rem}
+.lesson h2{font-family:"Fredoka", "Trebuchet MS", sans-serif; font-weight:600; font-size:1.75rem; line-height:1.15; margin:.15rem 0 .6rem}
+.lesson p{margin:0 0 .75rem; max-width:62ch}
+.fun{color:var(--muted); font-style:italic}
+.note{font-size:.95rem; color:var(--muted)}
+.try{background:var(--try-bg); border-left:5px solid var(--try-line); border-radius:10px; padding:.65rem .85rem; margin:.25rem 0 .9rem}
+.try strong{font-family:"Fredoka", "Trebuchet MS", sans-serif; font-weight:600}
+.mission{border:2px solid var(--accent); background:var(--accent-soft); border-radius:14px; padding:.85rem 1rem .4rem; margin:.25rem 0 1rem}
+.mission.done{border-color:var(--good); background:var(--good-soft)}
+.mission-h{font-family:"Fredoka", "Trebuchet MS", sans-serif; font-weight:600; font-size:1.1rem; color:var(--accent); margin:0 0 .35rem !important}
+.mission.done .mission-h{color:var(--good)}
+.mission .try{background:var(--panel)}
+.pair{font-size:1.15rem}
+.read-btn{padding:.3rem .8rem; font-size:.9rem; margin:0 0 .6rem}
+.schem-wrap{margin-top:.75rem; border:2px solid var(--line); border-radius:12px; padding:.5rem .75rem; background:var(--panel)}
+.schem-wrap[hidden]{display:none}
+#schem{width:100%; max-width:560px; height:auto; display:block; margin:0 auto}
+.sc-wire{fill:none; stroke:var(--ink); stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round}
+.sc-off{stroke:var(--line) !important; stroke-dasharray:4 5}
+.sc-thick{stroke-width:5} .sc-thin{stroke-width:1.5}
+.sc-led{fill:var(--panel); stroke:var(--ink); stroke-width:2.5; stroke-linejoin:round}
+.sc-led.on{fill:#FF2E2E} .sc-led.burnt{fill:#555}
+.sc-text{font-family:"Atkinson Hyperlegible", sans-serif; font-size:12px; fill:var(--muted)}
+.board-wrap.zoom #board{width:175%; max-width:none; max-height:none !important}
+@media (pointer:coarse){ #board{min-width:760px} }
+.real-card{border:2px dashed var(--line); border-radius:12px; padding:.6rem .9rem; margin:.5rem 0 1rem; background:var(--panel)}
+.real-card summary{font-family:"Fredoka", "Trebuchet MS", sans-serif; font-weight:600; cursor:pointer; color:var(--accent)}
+.card-list{padding-left:1.2rem; margin:.4rem 0 .8rem}
+.card-list li{margin-bottom:.3rem}
+#startResume[hidden], #startForm[hidden]{display:none}
+#printArea{display:none}
+@media print{
+  body.print-only > *:not(#printArea){display:none !important}
+  body.print-only{background:#fff}
+  body.print-only #printArea{display:block; color:#000; background:#fff; font-size:13pt; padding:1cm; font-family:"Atkinson Hyperlegible", Arial, sans-serif}
+  #printArea h1{font-family:"Fredoka", Arial, sans-serif; font-size:24pt; margin:0 0 .4cm}
+  .pr-list{padding-left:0; list-style:none}
+  .pr-list li{margin:0 0 .35cm; padding-left:1cm; position:relative}
+  .pr-list li::before{content:""; position:absolute; left:0; top:.05cm; width:.45cm; height:.45cm; border:1.5pt solid #000}
+  .cert{border:6pt double #000; padding:2cm 1.5cm; text-align:center}
+  .cert h1{font-size:36pt !important; margin:.3cm 0 .8cm !important}
+  .cert-who{font-family:"Fredoka", Arial, sans-serif; font-size:30pt; margin:.4cm 0; border-bottom:1.5pt solid #000; display:inline-block; padding:0 1cm .1cm}
+  .cert-small{font-size:11pt}
+}
+.views{display:flex; flex-wrap:wrap; gap:.4rem; margin:0 0 .9rem; padding-bottom:.8rem; border-bottom:2px solid var(--line)}
+.nav[hidden],.progress[hidden]{display:none}
+.proj-grid{display:grid; gap:.75rem; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); margin:.5rem 0 1rem}
+.proj-card{display:flex; flex-direction:column; gap:.3rem; text-align:left; border-radius:16px; padding:.9rem 1rem; border-color:var(--line); background:var(--panel); color:var(--ink); font-family:"Atkinson Hyperlegible", "Segoe UI", sans-serif; font-weight:400}
+.proj-card strong{font-family:"Fredoka", "Trebuchet MS", sans-serif; font-weight:600; font-size:1.2rem; color:var(--accent)}
+.proj-card.done{border-color:var(--good)}
+.proj-status{font-size:.9rem; color:var(--muted)}
+.checks .why{display:block; font-size:.93rem; color:var(--muted)}
+.room{margin:.2rem 0 .8rem}
+.steps{padding-left:1.5rem; margin:.3rem 0 1rem}
+.steps li{margin-bottom:.7rem; padding-left:.2rem}
+.steps li::marker{font-family:"Fredoka", "Trebuchet MS", sans-serif; font-weight:600; color:var(--accent)}
+.look{padding-left:1.2rem; margin:.3rem 0 1rem}
+.look li{margin-bottom:.35rem}
+.pinmap-wrap{display:block; margin:.5rem 0 .2rem}
+.pinmap{display:inline-flex; flex-direction:column; gap:3px; padding:.5rem .6rem .5rem .9rem; background:#26292C; border-radius:8px; position:relative}
+.pm-row{display:grid; grid-template-columns:repeat(4, 2.7rem); gap:3px}
+.pm-pin{font-family:"Fredoka", "Trebuchet MS", sans-serif; font-weight:600; font-size:.85rem; text-align:center; color:#FFE27A; background:#3A3F44; border-radius:4px; padding:.15rem 0}
+.pm-empty{color:#6B7075}
+.pm-body{color:#9AA0A4; font-size:.72rem; text-align:center; padding:.1rem 0}
+.pm-notch{position:absolute; left:-7px; top:50%; width:14px; height:14px; margin-top:-7px; border-radius:50%; background:var(--panel)}
+.pm-cap{display:block; font-size:.88rem; color:var(--muted); margin-top:.25rem}
+.room input{width:100%; accent-color:var(--accent)}
+.choices{display:flex; flex-direction:column; gap:.5rem; margin:.4rem 0 .8rem}
+.choice{text-align:left; border-radius:14px; font-family:"Atkinson Hyperlegible", "Segoe UI", sans-serif; font-weight:400; padding:.6rem .9rem; background:var(--panel)}
+.choice:disabled{opacity:.55}
+.choice.right{border-color:var(--good); background:var(--good-soft); color:var(--good); font-weight:700; opacity:1}
+.choice.wrong{border-color:var(--bad); color:var(--bad)}
+.checks{list-style:none; padding:0; margin:.3rem 0 .8rem}
+.checks li{padding:.35rem 0 .35rem 1.9rem; position:relative}
+.checks li::before{content:""; position:absolute; left:.15rem; top:.6rem; width:1.05rem; height:1.05rem; border:2px solid var(--line); border-radius:50%; background:var(--panel)}
+.checks li.ok::before{background:var(--good); border-color:var(--good)}
+.star{color:#C9A227; font-weight:700}
+.nav{display:flex; justify-content:space-between; gap:.6rem; margin-top:1rem; padding-top:.9rem; border-top:2px solid var(--line)}
+.lock-note{font-size:.95rem; color:var(--muted); margin:.5rem 0 0; text-align:right}
+.lock-note[hidden]{display:none}
+.parts{list-style:none; padding:0; margin:.25rem 0 .9rem}
+.parts li{padding:.45rem 0 .45rem 2rem; position:relative; border-bottom:1px solid var(--line)}
+.parts li::before{content:""; position:absolute; left:.2rem; top:.7rem; width:1.05rem; height:1.05rem; border:2px solid var(--line); border-radius:50%; background:var(--panel)}
+.parts li.placed::before{background:var(--good); border-color:var(--good)}
+.parts li.next{font-weight:700}
+.parts .why{display:block; font-size:.93rem; color:var(--muted); font-weight:400}
+.row{display:flex; flex-wrap:wrap; gap:.5rem; margin:.4rem 0 .8rem}
+.msg{min-height:1.5rem}
+.msg:empty{min-height:0; margin:0}
+.msg.good{color:var(--good); font-weight:700}
+.msg.bad{color:var(--bad); font-weight:700}
+.recap{padding-left:1.25rem; margin:.25rem 0 1rem}
+.recap li{margin-bottom:.45rem}
+h3{font-family:"Fredoka", "Trebuchet MS", sans-serif; font-weight:600; font-size:1.15rem; margin:.5rem 0 .4rem}
+.holdbtn{user-select:none; -webkit-user-select:none; touch-action:none}
+.holdbtn.active{background:var(--accent); color:var(--accent-ink)}
+.meter{margin:.25rem 0 .75rem}
+.meter-label{font-size:.95rem; color:var(--muted)}
+.meter-track{height:16px; border-radius:8px; background:var(--bg); border:2px solid var(--line); overflow:hidden; margin-top:.25rem}
+.meter-fill{height:100%; transition:width .35s}
+.meter-fill.ok{background:#16B86E} .meter-fill.high{background:#F08A1C}
+.meter-fill.burnt{background:#D7263D} .meter-fill.dim,.meter-fill.faint{background:#8FA3A0}
+.badge{border:3px dashed var(--line); border-radius:18px; padding:1rem 1.1rem; margin:.5rem 0 1rem; text-align:center}
+.badge.earned{border:3px solid #C9A227; background:var(--try-bg)}
+.badge-title{font-family:"Fredoka", "Trebuchet MS", sans-serif; font-weight:600; font-size:1.6rem; margin:0 0 .25rem !important; max-width:none !important}
+.badge p{margin-left:auto; margin-right:auto}
+.notes{background:var(--try-bg); border:2px solid var(--try-line); border-radius:18px; padding:1.1rem 1.25rem}
+.notes[hidden]{display:none}
+.notes h3{margin-top:0}
+.notes ul{padding-left:1.2rem; margin:0}
+.notes li{margin-bottom:.55rem}
+body.teacher{font-size:1.3rem}
+body.teacher .wrap{max-width:1600px}
+body.teacher .intro{display:none}
+body.teacher header h1{font-size:2.2rem}
+body.teacher .layout{grid-template-columns:minmax(0,1fr)}
+body.teacher .layout.with-notes{grid-template-columns:minmax(0,1.6fr) minmax(280px,1fr)}
+body.teacher .stage{grid-column:1/-1; position:static}
+body.teacher #board{max-height:58vh}
+body.teacher .lesson h2{font-size:2.5rem}
+body.teacher .lesson p{max-width:72ch}
+body.teacher button{font-size:1.15rem}
+body.teacher .progress button{width:2.6rem; height:2.6rem}
+@media (max-width:800px){ body.teacher .layout.with-notes{grid-template-columns:minmax(0,1fr)} }
+
+.pin-overlay{position:fixed; inset:0; background:rgba(10,15,20,.6); display:flex; align-items:center; justify-content:center; padding:1rem; z-index:50}
+.pin-overlay[hidden]{display:none}
+.pin-box{background:var(--panel); color:var(--ink); border:2px solid var(--line); border-radius:18px; padding:1.4rem 1.4rem .8rem; width:min(380px,100%); font-size:1.0625rem}
+.pin-box h2{font-family:"Fredoka", "Trebuchet MS", sans-serif; font-weight:600; font-size:1.6rem; margin:0 0 .4rem}
+.pin-box p{margin:0 0 .75rem}
+.pin-box input{font:inherit; font-size:1.6rem; letter-spacing:.4em; width:100%; padding:.5rem .75rem; border-radius:12px; border:2px solid var(--line); background:var(--bg); color:var(--ink); margin-bottom:.5rem}
+.sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
+
+/* board drawing: the board is a physical object, so it keeps its own colors in both themes */
+.board-body{fill:#F5F5EF; stroke:#C7CABF; stroke-width:2}
+.trench{fill:#DADCD3}
+.lbl{font-family:"Atkinson Hyperlegible", sans-serif; font-size:10px; fill:#6A7175}
+.sym{font-family:"Fredoka", sans-serif; font-size:15px; font-weight:600}
+.strip{fill:#C8892F; opacity:0; transition:opacity .25s}
+svg.xray .strip{opacity:.8}
+svg.xray .strip.lit{fill:#16B86E; opacity:.95}
+svg.xray .strip.lit2{fill:#F08A1C; opacity:.95}
+svg.xray .board-body{fill:#E9EAE3}
+.hole{fill:#3B4146; transition:fill .15s}
+.hole.lit{fill:#16B86E}
+.hole.lit2{fill:#F08A1C}
+.hole.picked{stroke:#0A5A33; stroke-width:2.2}
+.hit{fill:transparent; cursor:pointer}
+.btn-hit{fill:transparent; cursor:pointer}
+.flow.flow-dead{stroke:#FF8A3D; animation-duration:1.5s; filter:drop-shadow(0 0 1.5px #6B2A00)}
+.flow-track.dead{stroke:#D7263D; stroke-opacity:.2}
+.stop-mark circle{fill:#D7263D; stroke:#FFFFFF; stroke-width:2}
+body.noflow .flow, body.noflow .flow-track, body.noflow .stop-mark{display:none}
+.stop-mark path{stroke:#FFFFFF; stroke-width:2.2; stroke-linecap:round; fill:none}
+.led-g .led-body{fill:#2E9E4F; stroke:#1B5E2F}
+.led-g.led-on .led-body{fill:#45FF7A}
+.led-y .led-body{fill:#D8B536; stroke:#8A6F12}
+.led-y.led-on .led-body{fill:#FFE53B}
+.buzz-wave{fill:none; stroke:#5B3CC4; stroke-width:2; stroke-linecap:round; animation:pulse .45s ease-in-out infinite}
+.ring{fill:none; stroke:#7B5CFF; stroke-width:3; animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{stroke-opacity:1}50%{stroke-opacity:.25}}
+.wire{fill:none; stroke-width:4.5; stroke-linecap:round}
+.flow-track{fill:none; stroke:#E08A00; stroke-opacity:.45; stroke-width:8; stroke-linecap:round; stroke-linejoin:round}
+.flow{fill:none; stroke:#FFE14D; stroke-width:6; stroke-dasharray:.1 14; stroke-linecap:round; stroke-linejoin:round; animation:flow .9s linear infinite; filter:drop-shadow(0 0 1.5px #6B3A00) drop-shadow(0 0 3px #FFB300)}
+@keyframes flow{to{stroke-dashoffset:-14.1}}
+.led-body{fill:#E05555; fill-opacity:.55; stroke:#9E2B2B; stroke-width:1.5}
+.led-on .led-body{fill:#FF2E2E; fill-opacity:1; filter:url(#glow)}
+.led-on.b-high .led-body{fill:#FF8A8A; filter:url(#glowBig)}
+.led-on.b-dim .led-body{fill:#F04848; fill-opacity:.85; filter:url(#glowSmall)}
+.burnt .led-body{fill:#4A4A4A !important; fill-opacity:1; stroke:#1E1E1E !important}
+.smoke circle{fill:#9A9A9A; opacity:0; transform-box:fill-box; transform-origin:center; animation:smoke 1.8s ease-out infinite}
+.smoke circle:nth-child(2){animation-delay:.6s}
+.smoke circle:nth-child(3){animation-delay:1.2s}
+@keyframes smoke{0%{opacity:.75; transform:translateY(0) scale(.6)}100%{opacity:0; transform:translateY(-28px) scale(1.7)}}
+.pushbtn-cap{fill:#2E7DD7; stroke:#174C88; stroke-width:1.5; transition:transform .1s}
+.pushbtn.down .pushbtn-cap{transform:translateY(2px); fill:#1D5FAA}
+.short-flash{animation:shortflash .6s ease-in-out infinite}
+@keyframes shortflash{50%{opacity:.35}}
+@media (prefers-reduced-motion: reduce){
+  .ring,.flow,.short-flash,.buzz-wave{animation:none}
+  .smoke circle{animation:none; opacity:.5}
+  .strip,.hole,.meter-fill{transition:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="head-row">
+      <h1>Breadboard Basics</h1>
+      <div class="mode-area">
+        <div class="modes" role="group" aria-label="Mode">
+          <button type="button" id="studentBtn" aria-pressed="true">Student mode</button>
+          <button type="button" id="teacherBtn" aria-pressed="false">Teacher mode</button>
+        </div>
+        <div class="name-area" id="nameArea" aria-live="polite"></div>
+      </div>
+    </div>
+    <p class="intro">Learn the board engineers use to build circuits. Complete each mission to unlock the next step.</p>
+    <div class="teacher-bar" id="teacherBar" hidden>
+      <button type="button" id="notesBtn" aria-pressed="false">Show teacher notes</button>
+      <button type="button" id="fsBtn">Full screen</button>
+      <p class="keys">Keyboard: ← and → change steps, X shows underneath, T turns the tester on or off, N shows notes, F goes full screen. Presentation clickers that send Page Up and Page Down work too. In teacher mode, every step is unlocked. Switching to Student mode locks teacher mode again. To start a class with the sound off, share the link ending in #quiet.</p>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="stage" aria-label="Breadboard">
+      <div class="board-wrap">
+        <svg id="board" viewBox="0 0 680 386" role="img" aria-label="A breadboard with 30 numbered columns, rows a through j, and power rails along the top and bottom"></svg>
+      </div>
+      <div id="schemWrap" class="schem-wrap" hidden>
+        <svg id="schem" viewBox="0 0 520 170" role="img" aria-label="Schematic diagram of this circuit"></svg>
+        <p class="note">A schematic is a map of a circuit. Each symbol stands for a part, and the lines are wires. Gray dashed parts haven’t been placed yet.</p>
+      </div>
+      <div class="tools">
+        <button id="xrayBtn" type="button" aria-pressed="false">See underneath</button>
+        <button id="testerBtn" type="button" aria-pressed="false">Continuity tester</button>
+        <button id="schemBtn" type="button" aria-pressed="false" hidden>Show schematic</button>
+        <button id="zoomBtn" type="button" aria-pressed="false">Zoom in</button>
+        <button id="flowBtn" type="button" aria-pressed="true" hidden>Current: on</button>
+        <button id="soundBtn" type="button" aria-pressed="true">Sound: on</button>
+        <button id="clearBtn" type="button">Clear</button>
+        <form id="typeForm" autocomplete="off">
+          <label for="holeInput">Type a hole</label>
+          <input id="holeInput" placeholder="c9" aria-describedby="readout">
+          <button type="submit">Tap it</button>
+        </form>
+      </div>
+      <p id="readout" class="readout" aria-live="polite"></p>
+    </section>
+
+    <section class="lesson" aria-labelledby="stepTitle">
+      <div class="views" role="group" aria-label="Section">
+        <button type="button" id="tutBtn" aria-pressed="true">Tutorial</button>
+        <button type="button" id="projBtn" aria-pressed="false">Projects</button>
+      </div>
+      <div class="progress" id="progress" aria-label="Steps"></div>
+      <p class="count" id="count"></p>
+      <h2 id="stepTitle" tabindex="-1"></h2>
+      <button type="button" id="readBtn" class="read-btn" aria-pressed="false">Read aloud</button>
+      <div id="stepBody"></div>
+      <div id="interactive"></div>
+      <nav class="nav">
+        <button id="prevBtn" type="button">Back</button>
+        <button id="nextBtn" type="button" class="primary">Next</button>
+      </nav>
+      <p class="lock-note" id="lockNote" hidden>Finish the mission to unlock the next step.</p>
+    </section>
+
+    <aside class="notes" id="notes" hidden aria-labelledby="notesTitle">
+      <h3 id="notesTitle">Teacher notes</h3>
+      <div id="notesBody"></div>
+    </aside>
+  </main>
+</div>
+
+<div id="printArea" aria-hidden="true"></div>
+
+<div class="pin-overlay start-overlay" id="startOverlay" hidden>
+  <div class="pin-box" role="dialog" aria-modal="true" aria-labelledby="startTitle">
+    <h2 id="startTitle">Welcome to Breadboard Basics</h2>
+    <p id="startMsg">Type your first name and press Start to begin.</p>
+    <form id="startForm" autocomplete="off">
+      <label for="startInput" class="sr">Your first name</label>
+      <input id="startInput" class="name-input" placeholder="Your first name" maxlength="20" autocomplete="off">
+      <p id="startErr" class="msg bad" aria-live="polite"></p>
+      <div class="row"><button type="submit" class="primary">Start</button><button type="button" id="startCancel" hidden>Cancel</button></div>
+    </form>
+    <div id="startResume" hidden>
+      <div class="row"><button type="button" class="primary" id="resumeBtn">Continue</button><button type="button" id="restartBtn">Start over</button></div>
+      <p class="note"><button type="button" class="linkish" id="otherNameBtn">Not you? Use a different name</button></p>
+    </div>
+    <p class="note"><button type="button" class="linkish" id="startTeacher">Teacher? Unlock teacher mode</button></p>
+  </div>
+</div>
+
+<div class="pin-overlay" id="pinOverlay" hidden>
+  <div class="pin-box" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
+    <h2 id="pinTitle">Teacher mode</h2>
+    <p>Enter the teacher PIN to unlock teacher mode and the answer notes.</p>
+    <form id="pinForm" autocomplete="off">
+      <label for="pinInput" class="sr">PIN</label>
+      <input id="pinInput" type="password" inputmode="numeric" maxlength="12" autocomplete="off">
+      <p id="pinErr" class="msg bad" aria-live="polite"></p>
+      <div class="row"><button type="submit" class="primary" id="pinOk">Unlock</button><button type="button" id="pinCancel">Cancel</button></div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+const NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("board");
+const COLS = 30, P = 18, X0 = 100;
+const x = c => X0 + (c - 1) * P;
+const Y = {tp:36, tn:54, a:100, b:118, c:136, d:154, e:172, f:214, g:232, h:250, i:268, j:286, bn:330, bp:348};
+const TOP = ["a","b","c","d","e"], BOT = ["f","g","h","i","j"];
+const RAILS = {tp:"TP", tn:"TN", bn:"BN", bp:"BP"};
+const RAIL_NAME = {TP:"top + rail", TN:"top − rail", BN:"bottom − rail", BP:"bottom + rail"};
+let teacher = false, cur = 0, view = "tutorial", curProj = null, muted = false, showFlow = true;
+const fl = t => showFlow ? t : t.replace("The moving yellow dots show the current flowing", "Current flows").replace(" Watch the yellow dots: that’s the current flowing.", "");
+function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+function el(tag, attrs, parent){
+  const n = document.createElementNS(NS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+function makeUF(){
+  const p = {};
+  function find(a){ if (p[a] === undefined) p[a] = a; while (p[a] !== a) a = p[a]; return a; }
+  function join(a,b){ const ra = find(a), rb = find(b); if (ra !== rb) p[ra] = rb; }
+  return {find, join};
+}
+
+/* ---------- layers ---------- */
+const defs = el("defs", {}, svg);
+[["glow",4],["glowBig",8],["glowSmall",2]].forEach(([id,sd])=>{
+  const f = el("filter", {id, x:"-200%", y:"-200%", width:"500%", height:"500%"}, defs);
+  el("feGaussianBlur", {stdDeviation:sd, result:"b"}, f);
+  const fm = el("feMerge", {}, f);
+  el("feMergeNode", {in:"b"}, fm); el("feMergeNode", {in:"SourceGraphic"}, fm);
+});
+const gBoard = el("g", {}, svg);
+const gStrips = el("g", {}, svg);
+const gHoles = el("g", {}, svg);
+const gChip = el("g", {style:"display:none"}, svg);
+const gParts = el("g", {style:"display:none"}, svg);
+const gSandbox = el("g", {style:"display:none"}, svg);
+const gFlow = el("g", {}, svg);
+const gMarks = el("g", {"pointer-events":"none"}, svg);
+const gProbes = el("g", {"pointer-events":"none"}, svg);
+const gHits = el("g", {}, svg);
+const gBtnHits = el("g", {}, svg);
+
+/* ---------- board ---------- */
+el("rect", {class:"board-body", x:66, y:8, width:590, height:370, rx:12}, gBoard);
+el("rect", {class:"trench", x:X0-30, y:184, width:29*P+60, height:20, rx:3}, gBoard);
+el("line", {x1:X0-8, x2:x(30)+8, y1:22, y2:22, stroke:"#D7263D", "stroke-width":2.5}, gBoard);
+el("line", {x1:X0-8, x2:x(30)+8, y1:68, y2:68, stroke:"#1F6FD1", "stroke-width":2.5}, gBoard);
+el("line", {x1:X0-8, x2:x(30)+8, y1:316, y2:316, stroke:"#1F6FD1", "stroke-width":2.5}, gBoard);
+el("line", {x1:X0-8, x2:x(30)+8, y1:362, y2:362, stroke:"#D7263D", "stroke-width":2.5}, gBoard);
+[["tp","+","#D7263D"],["tn","−","#1F6FD1"],["bn","−","#1F6FD1"],["bp","+","#D7263D"]].forEach(([r,s,c])=>{
+  [X0-20, x(30)+20].forEach(xx=>{ const t = el("text", {class:"sym", x:xx, y:Y[r]+5, "text-anchor":"middle", fill:c}, gBoard); t.textContent = s; });
+});
+TOP.concat(BOT).forEach(r=>{
+  [X0-18, x(30)+18].forEach(xx=>{ const t = el("text", {class:"lbl", x:xx, y:Y[r]+3.5, "text-anchor":"middle"}, gBoard); t.textContent = r; });
+});
+[1,5,10,15,20,25,30].forEach(c=>{
+  [87, 305].forEach(yy=>{ const t = el("text", {class:"lbl", x:x(c), y:yy, "text-anchor":"middle"}, gBoard); t.textContent = c; });
+});
+const dimmer = el("rect", {x:66, y:8, width:590, height:370, rx:12, fill:"#0A1530", opacity:0, "pointer-events":"none"}, gBoard);
+const stripEls = {};
+function addStrip(node, attrs){ stripEls[node] = el("rect", Object.assign({class:"strip", rx:4}, attrs), gStrips); }
+for (let c=1;c<=COLS;c++){
+  addStrip("T"+c, {x:x(c)-6, y:Y.a-8, width:12, height:Y.e-Y.a+16});
+  addStrip("B"+c, {x:x(c)-6, y:Y.f-8, width:12, height:Y.j-Y.f+16});
+}
+for (const r in RAILS) addStrip(RAILS[r], {x:x(1)-9, y:Y[r]-6, width:29*P+18, height:12});
+const holes = {}, nodeHoles = {};
+function addHole(id, cx, cy, node){
+  const rect = el("rect", {class:"hole", x:cx-4, y:cy-4, width:8, height:8, rx:1.5}, gHoles);
+  el("rect", {class:"hit", x:cx-9, y:cy-9, width:18, height:18, "data-id":id}, gHits);
+  holes[id] = {x:cx, y:cy, node, rect};
+  (nodeHoles[node] = nodeHoles[node] || []).push(id);
+}
+for (let c=1;c<=COLS;c++){
+  TOP.forEach(r=>addHole(r+c, x(c), Y[r], "T"+c));
+  BOT.forEach(r=>addHole(r+c, x(c), Y[r], "B"+c));
+  for (const r in RAILS) addHole(r+c, x(c), Y[r], RAILS[r]);
+}
+gHits.addEventListener("click", e=>{
+  const id = e.target.getAttribute && e.target.getAttribute("data-id");
+  if (id) onHole(id);
+});
+
+/* ---------- chip ---------- */
+el("rect", {x:x(20)-9, y:178, width:x(23)-x(20)+18, height:32, rx:3, fill:"#26292C"}, gChip);
+el("circle", {cx:x(20)-9, cy:194, r:5, fill:"#4A4F53"}, gChip);
+for (let c=20;c<=23;c++){
+  el("rect", {x:x(c)-2, y:Y.e-2, width:4, height:8, fill:"#B9BEC2"}, gChip);
+  el("rect", {x:x(c)-2, y:Y.f-6, width:4, height:8, fill:"#B9BEC2"}, gChip);
+}
+const chipT = el("text", {x:(x(20)+x(23))/2, y:198, "text-anchor":"middle", fill:"#D9DDE0", "font-size":"10", "font-family":"Atkinson Hyperlegible, sans-serif"}, gChip);
+chipT.textContent = "chip";
+const CHIP_PINS = {B20:1,B21:2,B22:3,B23:4,T23:5,T22:6,T21:7,T20:8};
+const gPinLbl = el("g", {style:"display:none", "pointer-events":"none"}, gChip);
+for (const node in CHIP_PINS){
+  const c = +node.slice(1), top = node[0] === "T";
+  const t = el("text", {x:x(c), y:top ? 190 : 207, "text-anchor":"middle", fill:"#FFE27A", "font-size":"10", "font-weight":"700", "font-family":"Fredoka, sans-serif"}, gPinLbl);
+  t.textContent = CHIP_PINS[node];
+}
+let pinsShown = false;
+const pinNode = p => Object.keys(CHIP_PINS).find(k=>CHIP_PINS[k] === p);
+const pinHole = node => (node[0] === "T" ? "e" : "f") + node.slice(1);
+
+/* ---------- drawing helpers ---------- */
+function dot(g, cx, cy, color){ el("circle", {cx, cy, r:3.2, fill:color}, g); }
+function makeBattery(parent){
+  const g = el("g", {}, parent);
+  el("rect", {x:6, y:14, width:48, height:68, rx:7, fill:"#2B2F33"}, g);
+  el("rect", {x:6, y:14, width:48, height:12, rx:6, fill:"#C9A227"}, g);
+  const t = el("text", {x:30, y:58, "text-anchor":"middle", fill:"#F2F2F2", "font-size":"12", "font-family":"Fredoka, sans-serif"}, g); t.textContent = "3 V";
+  const p = el("text", {x:44, y:42, "text-anchor":"middle", fill:"#FF6B6B", "font-size":"12"}, g); p.textContent = "+";
+  const m = el("text", {x:44, y:74, "text-anchor":"middle", fill:"#7FB2FF", "font-size":"12"}, g); m.textContent = "−";
+  el("path", {class:"wire", d:"M54 34 C80 34 96 22 118 36", stroke:"#D7263D"}, g);
+  el("path", {class:"wire", d:"M54 66 C82 66 98 66 118 54", stroke:"#2A2E31"}, g);
+  dot(g,118,36,"#7A1220"); dot(g,118,54,"#000");
+  return g;
+}
+function makeSmoke(parent, cx, cy){
+  const g = el("g", {class:"smoke"}, parent);
+  for (let i=0;i<3;i++) el("circle", {cx:cx + (i-1)*4, cy:cy-10, r:4}, g);
+  return g;
+}
+const BANDS_220 = ["#C62828","#C62828","#6D4C41","#C9A227"];
+const COLORS = {red:"#D7263D", black:"#2A2E31"};
+
+/* ---------- fixed LED circuit (resistor step and final screen) ---------- */
+const parts = {};
+makeBattery(gParts);
+(function(){ const g = el("g", {}, gParts);
+  el("path", {class:"wire", d:"M190 36 C158 44 158 92 190 100", stroke:"#D7263D"}, g);
+  dot(g,190,36,"#7A1220"); dot(g,190,100,"#7A1220"); })();
+parts.resistor = (function(){
+  const g = el("g", {}, gParts);
+  el("line", {x1:190, y1:136, x2:226, y2:136, stroke:"#9AA0A4", "stroke-width":2.5}, g);
+  el("line", {x1:262, y1:136, x2:298, y2:136, stroke:"#9AA0A4", "stroke-width":2.5}, g);
+  el("rect", {x:224, y:128, width:40, height:16, rx:8, fill:"#E7C99A", stroke:"#B9965E"}, g);
+  g.bands = [232,240,248,256].map((bx,i)=>el("rect",{x:bx,y:128,width:3.5,height:16,fill:BANDS_220[i]},g));
+  dot(g,190,136,"#666"); dot(g,298,136,"#666");
+  return g;
+})();
+parts.resWire = (function(){
+  const g = el("g", {style:"display:none"}, gParts);
+  el("path", {class:"wire", d:"M190 136 Q244 116 298 136", stroke:"#E3B505"}, g);
+  dot(g,190,136,"#8A6D00"); dot(g,298,136,"#8A6D00");
+  return g;
+})();
+parts.led = (function(){
+  const g = el("g", {}, gParts);
+  const leg = {stroke:"#9AA0A4", "stroke-width":2.5, fill:"none", "stroke-linejoin":"round"};
+  el("path", Object.assign({d:"M298 118 L298 104 L310 92"}, leg), g);
+  el("path", Object.assign({d:"M334 118 L334 104 L322 92"}, leg), g);
+  el("circle", {class:"led-body", cx:316, cy:84, r:10.5}, g);
+  const s = el("text", {x:287, y:112, fill:"#B3261E", "font-size":"12", "font-weight":"700"}, g); s.textContent = "+";
+  dot(g,298,118,"#666"); dot(g,334,118,"#666");
+  return g;
+})();
+(function(){ const g = el("g", {}, gParts);
+  el("path", {class:"wire", d:"M334 100 C366 90 366 60 334 54", stroke:"#2A2E31"}, g);
+  dot(g,334,100,"#000"); dot(g,334,54,"#000"); })();
+parts.smoke = makeSmoke(gParts, 316, 76);
+parts.smoke.style.display = "none";
+const FLOW1 = "M54 34 C80 34 96 22 118 36 L190 36 C158 44 158 92 190 100 L190 136 L298 136 L298 118 L298 104 L316 86 L334 104 L334 118 L334 100 C366 90 366 60 334 54 L118 54 C98 66 82 66 54 66";
+const flowTrack = el("path", {class:"flow-track", d:FLOW1, style:"display:none"}, gFlow);
+const flowPath = el("path", {class:"flow", d:FLOW1, style:"display:none"}, gFlow);
+
+let resChoice = "r220";
+const RES = {
+  none:{label:"No resistor", bands:null, meter:100, mood:"burnt",
+    msg:"Pop! With no resistor, way too much electricity rushes through the LED and it burns out. In real life it would be ruined for good."},
+  r47:{label:"47 Ω", bands:["#F2C811","#7B3FA0","#1A1A1A","#C9A227"], meter:82, mood:"high",
+    msg:"Super bright, but that’s too much electricity for a small LED. It gets hot and won’t last long."},
+  r220:{label:"220 Ω", bands:BANDS_220, meter:45, mood:"ok",
+    msg:"Bright enough to see, and the LED stays safe."},
+  r1k:{label:"1,000 Ω", bands:["#6D4C41","#1A1A1A","#C62828","#C9A227"], meter:16, mood:"dim",
+    msg:"Dimmer, but still safe. A bigger resistor lets less electricity through."},
+  r100k:{label:"100,000 Ω", bands:["#6D4C41","#1A1A1A","#F2C811","#C9A227"], meter:3, mood:"faint",
+    msg:"So little electricity gets through that you can barely see any light."}
+};
+function drawParts(visible){
+  gParts.style.display = visible ? "" : "none";
+  const r = RES[resChoice], noRes = resChoice === "none";
+  parts.resistor.style.display = noRes ? "none" : "";
+  parts.resWire.style.display = noRes ? "" : "none";
+  if (r.bands) parts.resistor.bands.forEach((b,i)=>b.setAttribute("fill", r.bands[i]));
+  const led = parts.led;
+  led.classList.remove("led-on","b-high","b-dim","burnt");
+  parts.smoke.style.display = "none";
+  let flowOn = false;
+  if (visible){
+    if (r.mood === "burnt"){ led.classList.add("burnt"); parts.smoke.style.display = ""; }
+    else {
+      if (r.mood !== "faint") led.classList.add("led-on");
+      if (r.mood === "high") led.classList.add("b-high");
+      if (r.mood === "dim") led.classList.add("b-dim");
+      flowOn = true;
+    }
+  }
+  flowPath.style.display = flowOn ? "" : "none";
+  flowTrack.style.display = flowOn ? "" : "none";
+  flowPath.style.animationDuration = {high:".45s", ok:".9s", dim:"2.2s", faint:"6s"}[r.mood] || ".9s";
+  flowPath.style.opacity = r.mood === "faint" ? ".35" : "";
+}
+
+/* ---------- workbench engine (student-built circuits) ---------- */
+const sbBattery = makeBattery(gSandbox);
+const sbLayer = el("g", {}, gSandbox);
+const benchFlow = el("g", {}, gSandbox);
+let nid = 1;
+const BATTERY_HOLES = new Set(["tp2","tn2"]);
+const TOOLDEF = {
+  redwire:{type:"wire", color:"red", label:"Red wire"}, blackwire:{type:"wire", color:"black", label:"Black wire"},
+  resistor:{type:"resistor", label:"Resistor"}, led:{type:"led", label:"LED"},
+  "led-red":{type:"led", color:"r", label:"Red LED"}, "led-green":{type:"led", color:"g", label:"Green LED"}, "led-yellow":{type:"led", color:"y", label:"Yellow LED"},
+  button:{type:"button", label:"Button"}, buzzer:{type:"buzzer", label:"Buzzer"}, sensor:{type:"sensor", label:"Light sensor"},
+  "chip-blinker":{type:"chip", kind:"blinker", label:"Blinker chip"}, "chip-sequencer":{type:"chip", kind:"sequencer", label:"Sequencer chip"}, "chip-quiz":{type:"chip", kind:"quiz", label:"Quiz chip"},
+  move:{label:"Move a part"},
+  remove:{label:"Remove a part"}
+};
+const SB_TOOLS = ["redwire","blackwire","resistor","led","button","move","remove"];
+const PART_NAMES = {wire:"wire", resistor:"resistor", led:"LED", button:"button", buzzer:"buzzer", sensor:"light sensor", chip:"chip"};
+const CHIP_KINDS = {
+  blinker:{pins:{8:"+", 5:"−", 1:"A", 2:"B"}},
+  sequencer:{pins:{8:"+", 5:"−", 1:"R", 2:"Y", 3:"G", 7:"BTN"}},
+  quiz:{pins:{8:"+", 5:"−", 7:"IN1", 6:"IN2", 1:"OUT1", 2:"OUT2", 3:"BZ", 4:"RST"}}
+};
+function chipPins(col){ return [null, "f"+col, "f"+(col+1), "f"+(col+2), "f"+(col+3), "e"+(col+3), "e"+(col+2), "e"+(col+1), "e"+col]; }
+function chipHole(p, lab){ const k = CHIP_KINDS[p.kind].pins; for (const n in k) if (k[n] === lab) return p.pins[+n]; return null; }
+function newChipState(kind){ return kind === "blinker" ? {phase:0, t:0} : kind === "sequencer" ? {light:"R", t:0} : {latched:0}; }
+function chipOutputs(p, s){
+  if (p.kind === "blinker") return {A: s.phase === 0, B: s.phase === 1};
+  if (p.kind === "sequencer") return {R: s.light === "R", Y: s.light === "Y", G: s.light === "G"};
+  return {OUT1: s.latched === 1, OUT2: s.latched === 2, BZ: s.latched > 0};
+}
+function partHoles(p){ return p.type === "chip" ? p.pins.slice(1) : [p.a, p.b]; }
+function newBench(spec){
+  return {parts:(spec||[]).map(p=>Object.assign({id:nid++}, p, {color: COLORS[p.color] || p.color})), pending:null, power:false, pressed:false, down:new Set(), chips:{}, dark:false, light:100, tool:"redwire"};
+}
+function benchUsed(B, id){ return BATTERY_HOLES.has(id) || B.parts.some(p=>partHoles(p).includes(id)); }
+
+/* simulates a student-built circuit; opts can force button presses, room darkness, or chip states */
+function simulate(B, opts){
+  if (typeof opts === "boolean") opts = {pressAll:opts};
+  opts = opts || {};
+  const pressAll = opts.pressAll !== undefined ? opts.pressAll : B.pressed;
+  const pressIds = opts.pressIds || B.down || new Set();
+  const dark = opts.dark !== undefined ? opts.dark : !!B.dark;
+  const N = id => holes[id].node;
+  const conductors = B.parts.filter(p=>p.type === "wire" || (p.type === "button" && (pressAll || pressIds.has(p.id))) || (p.type === "sensor" && dark));
+  const U = makeUF();
+  conductors.forEach(p=>U.join(N(p.a), N(p.b)));
+  const C = n => U.find(n);
+  const Pn = C("TP"), Nn = C("TN");
+  const res = {lit:new Set(), burnt:new Set(), buzz:new Set(), backwards:0, same:0, short: Pn === Nn, chips:{}, conductors, comp:C, outHoles:[], vccHoles:[], gndHoles:[], sources:[Pn]};
+  B.parts.filter(p=>p.type === "chip").forEach(p=>{
+    const info = {powered:false, outs:{}, ins:{}};
+    const pc = lab => C(N(chipHole(p, lab)));
+    info.powered = !res.short && pc("+") === Pn && pc("−") === Nn;
+    Object.values(CHIP_KINDS[p.kind].pins).forEach(lab=>{ if (lab !== "+" && lab !== "−") info.ins[lab] = info.powered && pc(lab) === Pn; });
+    if (info.powered){
+      res.vccHoles.push(chipHole(p, "+")); res.gndHoles.push(chipHole(p, "−"));
+      const cs0 = (opts.chip && opts.chip[p.id]) || (B.chips && B.chips[p.id]) || newChipState(p.kind);
+      const outs = chipOutputs(p, cs0);
+      for (const lab in outs){
+        info.outs[lab] = outs[lab];
+        if (outs[lab] && pc(lab) !== Nn && pc(lab) !== Pn){ res.sources.push(pc(lab)); res.outHoles.push(chipHole(p, lab)); }
+      }
+    }
+    res.chips[p.id] = info;
+  });
+  if (res.short) return res;
+  const loads = B.parts.filter(p=>p.type === "led" || p.type === "buzzer").map(p=>({id:p.id, led:p.type === "led", an:C(N(p.a)), ca:C(N(p.b))}));
+  const rs = B.parts.filter(p=>p.type === "resistor").map(p=>[C(N(p.a)), C(N(p.b))]);
+  function reach(starts, useRes, list, reverse){
+    const seen = new Set(starts), q = [...starts];
+    while (q.length){
+      const n = q.shift();
+      if (useRes) rs.forEach(([a,b])=>{
+        if (a === n && !seen.has(b)){ seen.add(b); q.push(b); }
+        if (b === n && !seen.has(a)){ seen.add(a); q.push(a); }
+      });
+      list.forEach(l=>{
+        if (l.an === l.ca) return;
+        const from = reverse ? l.ca : l.an, to = reverse ? l.an : l.ca;
+        if (from === n && !seen.has(to)){ seen.add(to); q.push(to); }
+      });
+    }
+    return seen;
+  }
+  const leds = loads.filter(l=>l.led);
+  const F0 = reach(res.sources, false, leds, false), B0 = reach([Nn], false, leds, true);
+  leds.forEach(l=>{ if (l.an !== l.ca && F0.has(l.an) && B0.has(l.ca)) res.burnt.add(l.id); });
+  const ok = loads.filter(l=>!res.burnt.has(l.id));
+  const F = reach(res.sources, true, ok, false), Bk = reach([Nn], true, ok, true);
+  ok.forEach(l=>{
+    if (l.an === l.ca){ if (l.led) res.same++; return; }
+    if (F.has(l.an) && Bk.has(l.ca)) (l.led ? res.lit : res.buzz).add(l.id);
+    else if (l.led && F.has(l.ca) && Bk.has(l.an)) res.backwards++;
+  });
+  return res;
+}
+function drawChip(g, p, sim){
+  const c = p.col, x1 = x(c) - 9, x2 = x(c+3) + 9, info = sim && sim.chips[p.id];
+  for (let n=1;n<=8;n++){ const h = holes[p.pins[n]]; el("rect", {x:h.x-2, y:n <= 4 ? h.y-6 : h.y-2, width:4, height:8, fill:"#B9BEC2"}, g); }
+  el("rect", {x:x1, y:178, width:x2-x1, height:32, rx:3, fill:"#26292C"}, g);
+  el("circle", {cx:x1, cy:194, r:5, fill:"#4A4F53"}, g);
+  el("circle", {cx:x2-4, cy:194, r:2.6, fill: info && info.powered ? "#3DFF6E" : "#5A5F63"}, g);
+  const pins = CHIP_KINDS[p.kind].pins;
+  for (const n in pins){
+    const h = holes[p.pins[+n]], lab = pins[n];
+    const t = el("text", {x:h.x, y:+n <= 4 ? 207 : 190, "text-anchor":"middle", fill: info && info.outs[lab] ? "#7CFFA0" : "#FFE27A", "font-size": lab.length > 2 ? "6.5" : "9", "font-weight":"700", "font-family":"Fredoka, sans-serif"}, g);
+    t.textContent = lab;
+  }
+}
+function drawBenchPart(p, sim, B){
+  const g = el("g", {}, sbLayer);
+  if (p.type === "chip"){ drawChip(g, p, sim); return; }
+  const A = holes[p.a], Bh = holes[p.b];
+  const mx = (A.x+Bh.x)/2, my = (A.y+Bh.y)/2, dx = Bh.x-A.x, dy = Bh.y-A.y;
+  const d = Math.hypot(dx,dy) || 1, ang = Math.atan2(dy,dx)*180/Math.PI;
+  const nx = -dy/d, ny = dx/d;
+  const lead = {stroke:"#9AA0A4", "stroke-width":2.5, fill:"none", "stroke-linecap":"round"};
+  if (p.type === "wire"){
+    const bend = Math.min(32, d*0.35);
+    el("path", {class:"wire", d:`M${A.x} ${A.y} Q${mx - nx*bend} ${my - ny*bend} ${Bh.x} ${Bh.y}`, stroke:p.color}, g);
+    const tip = p.color === COLORS.black ? "#000" : "#7A1220";
+    dot(g,A.x,A.y,tip); dot(g,Bh.x,Bh.y,tip);
+  } else if (p.type === "resistor"){
+    el("line", Object.assign({x1:A.x, y1:A.y, x2:Bh.x, y2:Bh.y}, lead), g);
+    const bw = Math.max(12, Math.min(36, d-10));
+    const body = el("g", {transform:`translate(${mx} ${my}) rotate(${ang})`}, g);
+    el("rect", {x:-bw/2, y:-7, width:bw, height:14, rx:7, fill:"#E7C99A", stroke:"#B9965E"}, body);
+    if (bw >= 20) [0.2,0.38,0.56,0.78].forEach((f,i)=>el("rect", {x:-bw/2 + bw*f - 1.5, y:-7, width:3, height:14, fill:BANDS_220[i]}, body));
+    dot(g,A.x,A.y,"#666"); dot(g,Bh.x,Bh.y,"#666");
+  } else if (p.type === "led" || p.type === "buzzer" || p.type === "sensor"){
+    const tx = mx - nx*18, ty = my - ny*18;
+    el("line", Object.assign({x1:A.x, y1:A.y, x2:tx, y2:ty}, lead), g);
+    el("line", Object.assign({x1:Bh.x, y1:Bh.y, x2:tx, y2:ty}, lead), g);
+    const body = el("g", {}, g);
+    if (p.type === "led"){
+      if (p.color && p.color !== "r") body.classList.add("led-" + p.color);
+      el("circle", {class:"led-body", cx:tx, cy:ty, r:9.5}, body);
+      if (sim && sim.lit.has(p.id)) body.classList.add("led-on");
+      if (sim && sim.burnt.has(p.id)){ body.classList.add("burnt"); makeSmoke(g, tx, ty); }
+    } else if (p.type === "buzzer"){
+      el("circle", {cx:tx, cy:ty, r:10.5, fill:"#2A2D30", stroke:"#111"}, body);
+      el("circle", {cx:tx, cy:ty, r:3, fill:"#6B7075"}, body);
+      if (sim && sim.buzz.has(p.id)) [14,20].forEach(rr=>el("path", {class:"buzz-wave", d:`M${tx+rr*0.55} ${ty-rr*0.8} A ${rr} ${rr} 0 0 1 ${tx+rr*0.55} ${ty+rr*0.8}`}, g));
+    } else {
+      el("circle", {cx:tx, cy:ty, r:8.5, fill:"#E9C46A", stroke:"#9C7A1E"}, body);
+      el("path", {d:`M${tx-5} ${ty} l1.7 -3 l1.7 6 l1.7 -6 l1.7 6 l1.7 -6 l1.6 3`, stroke:"#B23A2E", "stroke-width":1.3, fill:"none"}, body);
+    }
+    if (p.type !== "sensor"){
+      const ux = -dx/d, uy = -dy/d;
+      const s = el("text", {x:A.x + ux*9 - nx*9 - 4, y:A.y + uy*9 - ny*9 + 4, fill:"#B3261E", "font-size":"12", "font-weight":"700"}, g); s.textContent = "+";
+    }
+    dot(g,A.x,A.y,"#666"); dot(g,Bh.x,Bh.y,"#666");
+  } else if (p.type === "button"){
+    el("line", Object.assign({x1:A.x, y1:A.y, x2:Bh.x, y2:Bh.y}, lead), g);
+    const down = B.pressed || (B.down && B.down.has(p.id));
+    const bg = el("g", {class:"pushbtn" + (down ? " down" : "")}, g);
+    el("rect", {x:mx-12, y:my-12, width:24, height:24, rx:4, fill:"#3A3F44", stroke:"#1F2225"}, bg);
+    el("circle", {class:"pushbtn-cap", cx:mx, cy:my-1, r:7.5}, bg);
+    dot(g,A.x,A.y,"#666"); dot(g,Bh.x,Bh.y,"#666");
+  }
+}
+function partGeo(p){
+  const A = holes[p.a], Bh = holes[p.b];
+  const mx = (A.x+Bh.x)/2, my = (A.y+Bh.y)/2, dx = Bh.x-A.x, dy = Bh.y-A.y, d = Math.hypot(dx,dy) || 1;
+  return {A, Bh, mx, my, nx:-dy/d, ny:dx/d, d};
+}
+function partPath(p, fromA){
+  const g = partGeo(p), S = fromA ? g.A : g.Bh, E = fromA ? g.Bh : g.A;
+  if (p.type === "wire"){ const bend = Math.min(32, g.d*0.35); return `M${S.x} ${S.y} Q${g.mx - g.nx*bend} ${g.my - g.ny*bend} ${E.x} ${E.y}`; }
+  if (p.type === "led" || p.type === "buzzer" || p.type === "sensor"){ return `M${S.x} ${S.y} L${g.mx - g.nx*18} ${g.my - g.ny*18} L${E.x} ${E.y}`; }
+  return `M${S.x} ${S.y} L${E.x} ${E.y}`;
+}
+/* traces the path electricity takes, from each source (battery +, chip outputs) through each part and back to − */
+function benchFlowPaths(B, sim){
+  const N = id => holes[id].node, Cc = n => sim.comp(n);
+  const conductors = sim.conductors;
+  const Pc = Cc("TP"), Nc = Cc("TN");
+  const loads = B.parts.filter(p=>(p.type === "led" && sim.lit.has(p.id)) || (p.type === "buzzer" && sim.buzz.has(p.id)));
+  const rs = B.parts.filter(p=>p.type === "resistor" && Cc(N(p.a)) !== Cc(N(p.b)));
+  const reach = (starts, rev)=>{
+    const seen = new Set(starts), q = [...starts];
+    while (q.length){
+      const n = q.shift();
+      rs.forEach(r=>{ const a = Cc(N(r.a)), b = Cc(N(r.b)); if (a === n && !seen.has(b)){ seen.add(b); q.push(b); } if (b === n && !seen.has(a)){ seen.add(a); q.push(a); } });
+      loads.forEach(l=>{ const an = Cc(N(l.a)), ca = Cc(N(l.b)), u = rev ? ca : an, v = rev ? an : ca; if (u === n && !seen.has(v)){ seen.add(v); q.push(v); } });
+    }
+    return seen;
+  };
+  const F = reach(sim.sources, false), Bk = reach([Nc], true), on = c => F.has(c) && Bk.has(c);
+  const elems = rs.filter(r=>on(Cc(N(r.a))) && on(Cc(N(r.b)))).concat(loads);
+  const dist = {}, q = [];
+  sim.sources.forEach(c=>{ if (dist[c] === undefined){ dist[c] = 0; q.push(c); } });
+  while (q.length){
+    const n = q.shift();
+    elems.forEach(e=>{ const a = Cc(N(e.a)), b = Cc(N(e.b));
+      if (a === n && dist[b] === undefined){ dist[b] = dist[n] + 1; q.push(b); }
+      if (b === n && dist[a] === undefined){ dist[a] = dist[n] + 1; q.push(a); } });
+  }
+  const out = ["M54 34 C80 34 96 22 118 36"], ports = {};
+  const port = c => ports[c] || (ports[c] = {ins:[], outs:[]});
+  port(Pc).ins.push("tp2"); port(Nc).outs.push("tn2");
+  sim.outHoles.forEach(h=>port(Cc(N(h))).ins.push(h));
+  sim.vccHoles.forEach(h=>port(Cc(N(h))).outs.push(h));
+  sim.gndHoles.forEach(h=>port(Cc(N(h))).ins.push(h));
+  elems.forEach(e=>{
+    let fromA = true;
+    if (e.type === "resistor"){ const da = dist[Cc(N(e.a))], db = dist[Cc(N(e.b))]; fromA = (da === undefined ? 1e9 : da) <= (db === undefined ? 1e9 : db); }
+    const src = fromA ? e.a : e.b, dst = fromA ? e.b : e.a;
+    port(Cc(N(src))).outs.push(src); port(Cc(N(dst))).ins.push(dst);
+    out.push(partPath(e, fromA));
+  });
+  const adj = {};
+  conductors.forEach(p=>{ const a = N(p.a), b = N(p.b);
+    (adj[a] = adj[a] || []).push({p, here:p.a, there:p.b, to:b});
+    (adj[b] = adj[b] || []).push({p, here:p.b, there:p.a, to:a}); });
+  const seg = (h1, h2)=>`M${holes[h1].x} ${holes[h1].y} L${holes[h2].x} ${holes[h2].y}`;
+  function route(fromHole, toHole){
+    const s0 = N(fromHole), s1 = N(toHole), prev = {}; prev[s0] = null; const qq = [s0];
+    while (qq.length){ const n = qq.shift(); if (n === s1) break; (adj[n] || []).forEach(ed=>{ if (prev[ed.to] === undefined){ prev[ed.to] = ed; qq.push(ed.to); } }); }
+    if (prev[s1] === undefined) return;
+    const chain = []; let n = s1;
+    while (prev[n]){ chain.unshift(prev[n]); n = N(prev[n].here); }
+    let curH = fromHole;
+    chain.forEach(ed=>{ if (curH !== ed.here) out.push(seg(curH, ed.here)); out.push(partPath(ed.p, ed.here === ed.p.a)); curH = ed.there; });
+    if (curH !== toHole) out.push(seg(curH, toHole));
+  }
+  Object.values(ports).forEach(pt=>pt.ins.forEach(i=>pt.outs.forEach(o=>route(i, o))));
+  out.push("M118 54 C98 66 82 66 54 66");
+  return out;
+}
+/* for a circuit that isn't working: how far the current gets, and where it stops */
+function deadFlowPaths(B, sim){
+  const N = id => holes[id].node;
+  const out = ["M54 34 C80 34 96 22 118 36"], stops = new Set(), visited = {}, q = [];
+  const live = new Set(sim.conductors.map(p=>p.id));
+  const visit = h => { const n = N(h); if (visited[n]) return; visited[n] = h; q.push(n); };
+  const seg = (h1, h2)=>`M${holes[h1].x} ${holes[h1].y} L${holes[h2].x} ${holes[h2].y}`;
+  visit("tp2");
+  while (q.length){
+    const n = q.shift(), entry = visited[n];
+    if (n === "TN") continue;
+    let onward = 0;
+    B.parts.forEach(p=>{
+      if (p.type === "chip"){ if (partHoles(p).some(h=>N(h) === n)) onward++; return; }
+      if (N(p.a) === N(p.b)) return;
+      const here = N(p.a) === n ? p.a : (N(p.b) === n ? p.b : null);
+      if (!here) return;
+      const fromA = here === p.a, there = fromA ? p.b : p.a;
+      const passes = p.type === "wire" || p.type === "resistor" || ((p.type === "button" || p.type === "sensor") && live.has(p.id))
+        || ((p.type === "led" || p.type === "buzzer") && fromA && !sim.burnt.has(p.id));
+      if (!passes){ if (entry !== here) out.push(seg(entry, here)); stops.add(here); onward++; return; }
+      if (visited[N(there)]){ if (visited[N(there)] !== there || there !== entry) onward += (N(there) === "TN" ? 1 : 0); return; }
+      if (entry !== here) out.push(seg(entry, here));
+      out.push(partPath(p, fromA));
+      visit(there); onward++;
+    });
+    if (!onward) stops.add(entry);
+  }
+  return {paths:out, stops:[...stops]};
+}
+function drawBench(B){
+  while (sbLayer.firstChild) sbLayer.removeChild(sbLayer.firstChild);
+  while (benchFlow.firstChild) benchFlow.removeChild(benchFlow.firstChild);
+  while (gBtnHits.firstChild) gBtnHits.removeChild(gBtnHits.firstChild);
+  const sim = B.power ? simulate(B) : null;
+  B.parts.forEach(p=>drawBenchPart(p, sim, B));
+  if (sim && !sim.short && (sim.lit.size || sim.buzz.size)){
+    const ds = benchFlowPaths(B, sim);
+    ds.forEach(d=>el("path", {class:"flow-track", d}, benchFlow));
+    ds.forEach(d=>el("path", {class:"flow", d}, benchFlow));
+  } else if (sim && !sim.short && !B.noTrace && B.parts.length && !Object.values(sim.chips).some(c=>c.powered)){
+    const dead = deadFlowPaths(B, sim);
+    dead.paths.forEach(d=>el("path", {class:"flow-track dead", d}, benchFlow));
+    dead.paths.forEach(d=>el("path", {class:"flow flow-dead", d}, benchFlow));
+    dead.stops.forEach(h=>{ const g = el("g", {class:"stop-mark"}, benchFlow), c = holes[h];
+      el("circle", {cx:c.x, cy:c.y, r:7.5}, g); el("path", {d:`M${c.x-3.2} ${c.y-3.2} l6.4 6.4 M${c.x+3.2} ${c.y-3.2} l-6.4 6.4`}, g); });
+  }
+  B.parts.forEach(p=>{ if (p.type !== "button") return; const g = partGeo(p);
+    el("rect", {class:"btn-hit", x:g.mx-13, y:g.my-13, width:26, height:26, rx:5, "data-pid":p.id}, gBtnHits); });
+  if (B.pending){ const h = holes[B.pending]; el("circle", {class:"ring", cx:h.x, cy:h.y, r:9}, sbLayer); }
+  sbBattery.classList.toggle("short-flash", !!(sim && sim.short));
+  return sim;
+}
+function benchStatus(B, sim){
+  if (!B.power) return ["msg", B.parts.length ? "Power is off. Turn it on to test your circuit." : "Pick a part, then tap two holes to place it."];
+  if (sim.short) return ["msg bad", "Short circuit! Wires connect the + rail straight to the − rail, so electricity races around without passing through anything. Real batteries get hot when this happens."];
+  const out = []; let cls = "msg";
+  if (sim.lit.size){ out.push(sim.lit.size === 1 ? "1 LED is glowing!" : `${sim.lit.size} LEDs are glowing!`); cls = "msg good"; }
+  if (sim.burnt.size){ out.push(`${sim.burnt.size === 1 ? "An LED" : "Some LEDs"} burned out because there’s no resistor in the loop.`); cls = "msg bad"; }
+  if (sim.backwards) out.push("An LED is in backwards.");
+  if (sim.same) out.push("An LED has both legs on the same strip, so electricity skips it.");
+  if (sim.lit.size && showFlow) out.push("The moving yellow dots show the current flowing from the + rail, through the parts, and back to the − rail.");
+  if (!out.length){
+    out.push(B.parts.some(p=>p.type === "button") && !B.pressed
+      ? "No light yet. If your loop has a button, press and hold it."
+      : "No complete loop yet. Electricity needs a path from the + rail, through the parts, and back to the − rail.");
+  }
+  if (showFlow && !sim.lit.size && !(sim.buzz && sim.buzz.size) && !B.noTrace && B.parts.length && !Object.values(sim.chips).some(c=>c.powered)) out.push("The orange dots show how far the current gets, and a red ✕ marks where it stops.");
+  return [cls, out.join(" ")];
+}
+/* free placement used by Fix my circuit, Free build, and Projects; returns true when parts changed */
+function benchTap(B, id){
+  if (B.tool !== "move") B.moving = null;
+  if (B.tool === "remove"){
+    const i = B.parts.findIndex(p=>partHoles(p).includes(id));
+    if (i < 0){ readout.innerHTML = BATTERY_HOLES.has(id) ? "The battery stays put. Remove other parts instead." : "There’s no part in that hole. Tap a hole that has a leg in it."; return false; }
+    const gone = B.parts.splice(i,1)[0];
+    if (gone.type === "chip" && B.chips) delete B.chips[gone.id];
+    readout.innerHTML = `Removed the ${PART_NAMES[gone.type]}.`;
+    return true;
+  }
+  if (B.tool === "move"){
+    if (!B.moving){
+      const mp = B.parts.find(q=>partHoles(q).includes(id));
+      if (!mp){ readout.innerHTML = BATTERY_HOLES.has(id) ? "The battery stays put." : "Tap a leg of the part you want to move."; return false; }
+      B.moving = {pid:mp.id, from:id}; B.pending = id; drawBench(B);
+      readout.innerHTML = mp.type === "chip" ? "Picked up the chip. Now tap the hole where its left side should go." : `Picked up that end of the ${PART_NAMES[mp.type]}. Now tap its new hole.`;
+      return false;
+    }
+    const mp = B.parts.find(q=>q.id === B.moving.pid), from = B.moving.from;
+    B.moving = null; B.pending = null;
+    if (!mp || id === from){ drawBench(B); readout.innerHTML = "Move canceled."; return false; }
+    if (mp.type === "chip"){
+      const col = +id.replace(/\D/g, "");
+      if (RAIL_NAME[holes[id].node] || col + 3 > COLS){ drawBench(B); readout.innerHTML = "The chip can’t go there. It needs 4 columns in the middle of the board."; return false; }
+      const pins = chipPins(col);
+      if (pins.slice(1).some(h=>!mp.pins.includes(h) && benchUsed(B, h))){ drawBench(B); readout.innerHTML = "Something is in the way there. Move canceled."; return false; }
+      mp.col = col; mp.pins = pins;
+      readout.innerHTML = `Moved the chip to columns ${col} to ${col+3}.`;
+      return true;
+    }
+    if (BATTERY_HOLES.has(id) || benchUsed(B, id)){ drawBench(B); readout.innerHTML = "That hole already has a leg in it. Move canceled."; return false; }
+    if (mp.a === from) mp.a = id; else mp.b = id;
+    readout.innerHTML = `Moved that end of the ${PART_NAMES[mp.type]} from <b>${nice(from)}</b> to <b>${nice(id)}</b>.`;
+    return true;
+  }
+  const T = TOOLDEF[B.tool];
+  if (T.type === "chip"){
+    if (RAIL_NAME[holes[id].node]){ readout.innerHTML = "Chips go in the middle of the board, across the valley. Tap a hole in row e or f."; return false; }
+    const col = +id.replace(/\D/g, "");
+    if (col + 3 > COLS){ readout.innerHTML = "There isn’t room for the chip there. Tap a hole farther to the left."; return false; }
+    const pins = chipPins(col);
+    if (pins.slice(1).some(h=>benchUsed(B, h))){ readout.innerHTML = "Something is in the way. A chip needs 4 empty holes in row e and 4 in row f."; return false; }
+    const p = {id:nid++, type:"chip", kind:T.kind, col, pins};
+    B.parts.push(p); (B.chips = B.chips || {})[p.id] = newChipState(T.kind);
+    readout.innerHTML = `Placed the ${T.label.toLowerCase()} in columns ${col} to ${col+3}, across the valley.`;
+    return true;
+  }
+  const polar = T.type === "led" || T.type === "buzzer";
+  if (B.pending === id){ B.pending = null; drawBench(B); readout.innerHTML = "Canceled. Tap a hole to start again."; return false; }
+  if (BATTERY_HOLES.has(id)){ readout.innerHTML = "The battery wires are using that hole. Pick an empty one."; return false; }
+  if (benchUsed(B, id)){ readout.innerHTML = "That hole already has a leg in it. Each hole holds one leg, so pick an empty hole."; return false; }
+  if (!B.pending){
+    B.pending = id; drawBench(B);
+    readout.innerHTML = polar
+      ? `Long leg (+) goes in <b>${nice(id)}</b>. Now tap where the short leg goes.`
+      : `One end goes in <b>${nice(id)}</b>. Now tap where the other end goes.`;
+    return false;
+  }
+  const a = B.pending;
+  B.parts.push({id:nid++, type:T.type, a, b:id, color: T.type === "wire" ? COLORS[T.color] : T.color});
+  B.pending = null;
+  readout.innerHTML = `Placed a ${T.label.toLowerCase()} from <b>${nice(a)}</b> to <b>${nice(id)}</b>.`;
+  return true;
+}
+function toolsRow(B, list){
+  return `<div class="row" role="group" aria-label="Parts">${(list || SB_TOOLS).map(k=>`<button type="button" data-tool="${k}" aria-pressed="${B.tool===k}">${TOOLDEF[k].label}</button>`).join("")}</div>`;
+}
+function wireTools(box, B){
+  box.querySelectorAll("[data-tool]").forEach(b=>b.onclick = ()=>{
+    if (testerOn) setTester(false);
+    B.tool = b.dataset.tool; B.pending = null; B.moving = null;
+    refresh();
+    const nb = document.querySelector(`[data-tool="${B.tool}"]`); if (nb) nb.focus();
+    const T = TOOLDEF[B.tool];
+    readout.innerHTML = B.tool === "move" ? "Tap a leg of the part you want to move, then tap its new hole."
+      : B.tool === "remove" ? "Tap any leg of a part to take it out."
+      : T.type === "chip" ? "Tap a hole in the middle of the board. The chip sits across the valley, starting at that column."
+      : (T.type === "led" || T.type === "buzzer") ? `Tap the hole for the ${T.label.toLowerCase()}’s long leg (+) first, then the short leg.`
+      : `Tap two holes to place a ${T.label.toLowerCase()}.`;
+  });
+}
+
+/* ---------- highlights and readout ---------- */
+const readout = document.getElementById("readout");
+function clearMarks(){
+  Object.values(holes).forEach(h=>h.rect.classList.remove("lit","lit2","picked"));
+  Object.values(stripEls).forEach(s=>s.classList.remove("lit","lit2"));
+}
+function lightNode(node, cls){
+  (nodeHoles[node]||[]).forEach(id=>holes[id].rect.classList.add(cls));
+  if (stripEls[node]) stripEls[node].classList.add(cls);
+}
+function ringAt(id){ const h = holes[id]; el("circle", {class:"ring", cx:h.x, cy:h.y, r:9}, gMarks); }
+function clearRings(){ while (gMarks.firstChild) gMarks.removeChild(gMarks.firstChild); }
+function nice(id){
+  const h = holes[id];
+  if (RAIL_NAME[h.node]) return `the ${RAIL_NAME[h.node]} (spot ${id.replace(/\D/g,"")})`;
+  return id;
+}
+function nodeName(n){
+  if (RAIL_NAME[n]) return "the " + RAIL_NAME[n];
+  const c = n.slice(1);
+  return n[0] === "T" ? `column ${c}, top half (rows a–e)` : `column ${c}, bottom half (rows f–j)`;
+}
+function describe(id){
+  const node = holes[id].node;
+  if (RAIL_NAME[node]) return `That hole is on the <b>${RAIL_NAME[node]}</b>. All 30 holes along that long row are connected to each other.`;
+  const others = nodeHoles[node].filter(h=>h!==id);
+  const pin = pinsShown && CHIP_PINS[node] ? ` That column is wired to <b>pin ${CHIP_PINS[node]}</b> of the chip.` : "";
+  return `You tapped <b>${id}</b>. It’s connected to <b>${others.join(", ")}</b>. Every other hole is on a different strip.${pin}`;
+}
+function explore(id){
+  clearMarks();
+  lightNode(holes[id].node, "lit");
+  holes[id].rect.classList.add("picked");
+  readout.innerHTML = describe(id);
+}
+
+/* ---------- x-ray ---------- */
+const xrayBtn = document.getElementById("xrayBtn");
+function setXray(on){
+  svg.classList.toggle("xray", on);
+  xrayBtn.setAttribute("aria-pressed", on ? "true" : "false");
+  xrayBtn.textContent = on ? "Hide underneath" : "See underneath";
+}
+xrayBtn.addEventListener("click", ()=>setXray(!svg.classList.contains("xray")));
+
+/* ---------- continuity tester ---------- */
+const testerBtn = document.getElementById("testerBtn");
+let testerOn = false;
+const probes = [];
+let actx = null;
+function beep(){
+  if (muted) return;
+  try{
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+    const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime;
+    o.type = "square"; o.frequency.value = 1200;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.07, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + 0.32);
+  }catch(_){}
+}
+function clearProbes(){ probes.length = 0; while (gProbes.firstChild) gProbes.removeChild(gProbes.firstChild); }
+function drawProbes(ok){
+  while (gProbes.firstChild) gProbes.removeChild(gProbes.firstChild);
+  if (probes.length === 2){
+    const a = holes[probes[0]], b = holes[probes[1]];
+    el("line", {x1:a.x, y1:a.y, x2:b.x, y2:b.y, stroke: ok ? "#16B86E" : "#8A9599", "stroke-width":3, "stroke-dasharray":"6 5"}, gProbes);
+  }
+  probes.forEach((id,i)=>{
+    const h = holes[id];
+    el("circle", {cx:h.x, cy:h.y, r:7.5, fill: i === 0 ? "#D7263D" : "#222", stroke:"#FFFFFF", "stroke-width":2}, gProbes);
+  });
+}
+function currentWires(){
+  const s = cs(), w = [];
+  if (s.type === "resistor" || s.final){
+    w.push(["TP","T6"], ["T14","TN"]);
+    if (s.type === "resistor" && resChoice === "none") w.push(["T6","T12"]);
+  }
+  const B = benchOf(s);
+  if (B) simulate(B).conductors.forEach(p=>w.push([holes[p.a].node, holes[p.b].node]));
+  return w;
+}
+function setTester(on){
+  testerOn = on;
+  testerBtn.setAttribute("aria-pressed", on ? "true" : "false");
+  clearProbes();
+  if (on) readout.innerHTML = "Tester on. Tap a hole to place the <b>red probe</b>.";
+}
+testerBtn.addEventListener("click", ()=>{
+  setTester(!testerOn);
+  if (!testerOn) readout.innerHTML = cs().readout || "Tester off. Tap any hole to see what it’s connected to.";
+  refresh();
+});
+function testerTap(id){
+  if (probes.length === 2) clearProbes();
+  if (probes.length === 1 && probes[0] === id){
+    readout.innerHTML = "Both probes on the same hole will always beep. Pick a different hole for the black probe."; return;
+  }
+  probes.push(id);
+  if (probes.length === 1){
+    drawProbes();
+    readout.innerHTML = `Red probe on <b>${nice(id)}</b>. Now tap a hole for the <b>black probe</b>.`;
+    return;
+  }
+  const [a,b] = probes, U = makeUF();
+  currentWires().forEach(([p,q])=>U.join(p,q));
+  const sameStrip = holes[a].node === holes[b].node;
+  const ok = U.find(holes[a].node) === U.find(holes[b].node);
+  drawProbes(ok);
+  if (ok){
+    beep();
+    readout.innerHTML = `<span class="beep">Beep!</span> <b>${nice(a)}</b> and <b>${nice(b)}</b> are connected. ${sameStrip ? "They share the same metal strip." : "A wire links their strips together."}`;
+  } else {
+    readout.innerHTML = `No beep. <b>${nice(a)}</b> and <b>${nice(b)}</b> are <b>not</b> connected.`;
+  }
+  const s = cs(), m = M[s.type];
+  if (m && m.test) m.test(a, b, ok, s, st(s));
+}
+
+document.getElementById("clearBtn").addEventListener("click", ()=>{
+  clearMarks(); clearProbes();
+  readout.innerHTML = testerOn ? "Tester on. Tap a hole to place the <b>red probe</b>." : (cs().readout || "Tap any hole to see what it’s connected to.");
+  refresh();
+});
+document.getElementById("typeForm").addEventListener("submit", e=>{
+  e.preventDefault();
+  const v = document.getElementById("holeInput").value.trim().toLowerCase().replace(/\s+/g,"");
+  let id = null, m;
+  if ((m = v.match(/^([a-j])(\d{1,2})$/))) id = m[1] + (+m[2]);
+  else if ((m = v.match(/^(top|bottom)([+-])(\d{1,2})?$/))){
+    const r = m[1] === "top" ? (m[2] === "+" ? "tp" : "tn") : (m[2] === "+" ? "bp" : "bn");
+    id = r + (m[3] ? +m[3] : 1);
+  }
+  if (!id || !holes[id]){ readout.innerHTML = "Try a name like <b>c9</b> (a letter a–j and a number 1–30) or <b>top+ 5</b>."; return; }
+  onHole(id);
+});
+function makeHold(btn, onChange){
+  let down = false;
+  const set = v => { if (down === v) return; down = v; btn.classList.toggle("active", v); onChange(v); };
+  btn.addEventListener("pointerdown", e=>{ if (btn.disabled) return; e.preventDefault(); try{ btn.setPointerCapture(e.pointerId); }catch(_){} set(true); });
+  ["pointerup","pointercancel","lostpointercapture"].forEach(t=>btn.addEventListener(t, ()=>set(false)));
+  btn.addEventListener("keydown", e=>{ if ((e.key === " " || e.key === "Enter") && !e.repeat){ e.preventDefault(); set(true); } });
+  btn.addEventListener("keyup", e=>{ if (e.key === " " || e.key === "Enter"){ e.preventDefault(); set(false); } });
+  btn.addEventListener("blur", ()=>set(false));
+  btn.addEventListener("contextmenu", e=>e.preventDefault());
+}
+
+let pressHandler = null;
+gBtnHits.addEventListener("pointerdown", e=>{
+  if (!e.target.getAttribute || !e.target.getAttribute("data-pid") || !pressHandler) return;
+  if (!teacher && !studentName) return;
+  e.preventDefault();
+  const h = pressHandler, pid = +e.target.getAttribute("data-pid");
+  h(true, pid);
+  const up = ()=>{ window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", up); h(false, pid); };
+  window.addEventListener("pointerup", up); window.addEventListener("pointercancel", up);
+});
+function testerNote(){ return testerOn ? `<p class="note"><b>The tester is on</b>, so tapping holes tests them instead of placing parts. Turn it off, or pick a part, to keep building.</p>` : ""; }
+
+/* ---------- missions ---------- */
+const done = new Set();
+let MS = {};
+const M = {};
+function st(s){ if (!MS[s.key]) MS[s.key] = (M[s.type] && M[s.type].init) ? M[s.type].init(s) : {}; return MS[s.key]; }
+function complete(s){
+  if (done.has(s.key)) return;
+  done.add(s.key);
+  if (studentName && steps.filter(x=>x.gated).every(x=>done.has(x.key))){ try{ localStorage.setItem("bb-tutorial-done:" + studentName.toLowerCase(), "1"); }catch(_){} }
+  updateNav();
+}
+function mbox(s, inner){
+  const d = done.has(s.key);
+  return `<div class="mission${d ? " done" : ""}"><p class="mission-h">${d ? "Mission complete!" : "Mission"}</p>${inner}</div>`;
+}
+function checklist(items){ return `<ul class="checks">${items.map(([ok,txt])=>`<li class="${ok ? "ok" : ""}">${txt}</li>`).join("")}</ul>`; }
+function benchOf(s){ if (!["guided","fix","free","review","project"].includes(s.type)) return null; const S = st(s); return S.preview && S.ex ? S.ex : S.bench; }
+
+M.explore3 = {
+  init:()=>({seen:new Set()}),
+  render(box,s,S){ box.innerHTML = mbox(s, `<p>Tap <b>3 different holes</b> anywhere on the board to start exploring.</p><p class="note">${Math.min(S.seen.size,3)} of 3 tapped</p>`); },
+  tap(id,s,S){ explore(id); S.seen.add(id); if (S.seen.size >= 3) complete(s); refresh(); }
+};
+
+M.findAll = {
+  init:()=>({found:new Set(), wrong:0, msg:"", cls:"msg"}),
+  render(box,s,S){
+    const t = s.target, node = holes[t].node, need = nodeHoles[node].length - 1, d = done.has(s.key);
+    clearMarks(); clearRings();
+    if (d) lightNode(node, "lit");
+    else { ringAt(t); S.found.forEach(h=>holes[h].rect.classList.add("lit")); }
+    box.innerHTML = mbox(s, `<p>Find all <b>${need} holes</b> connected to <b>${t}</b>, the hole with the purple ring.</p>
+      <p class="note">Found ${S.found.size} of ${need}: ${S.found.size ? [...S.found].join(", ") : "none yet"}</p>
+      <p class="${S.cls}" aria-live="polite">${S.msg}</p>
+      ${S.wrong >= 2 && !d ? `<p class="note">Hint: in the middle of the board, connected holes have the same column number and sit in the same half.</p>` : ""}`);
+  },
+  tap(id,s,S){
+    if (done.has(s.key)){ explore(id); return; }
+    const t = s.target, node = holes[t].node;
+    if (id === t){ S.msg = `That’s ${t} itself. Find the holes connected to it.`; S.cls = "msg"; }
+    else if (holes[id].node === node){
+      if (S.found.has(id)){ S.msg = `You already found ${id}.`; S.cls = "msg"; }
+      else {
+        S.found.add(id); S.msg = `Yes! ${id} is connected to ${t}.`; S.cls = "msg good";
+        if (S.found.size === nodeHoles[node].length - 1){ complete(s); S.msg = "You found them all! They share one metal strip."; }
+      }
+    } else { S.wrong++; S.msg = `${id} isn’t connected to ${t}. Try another hole.`; S.cls = "msg bad"; }
+    readout.innerHTML = S.msg;
+    refresh();
+  }
+};
+
+M.strips5 = {
+  init:()=>({nodes:new Set()}),
+  render(box,s,S){ box.innerHTML = mbox(s, `<p>Tap holes on <b>5 different strips</b>. Each orange bar is one strip.</p><p class="note">${Math.min(S.nodes.size,5)} of 5 strips</p>`); },
+  tap(id,s,S){ explore(id); S.nodes.add(holes[id].node); if (S.nodes.size >= 5) complete(s); refresh(); }
+};
+
+M.sort = {
+  init:()=>({i:0, wrong:0, answered:false, msg:"", cls:"msg"}),
+  render(box,s,S){
+    const n = s.pairs.length;
+    clearRings();
+    if (done.has(s.key)){ box.innerHTML = mbox(s, `<p>You sorted all ${n} pairs. Nice work!</p><p class="${S.cls}">${S.msg}</p>`); return; }
+    const [a,b] = s.pairs[S.i];
+    ringAt(a); ringAt(b);
+    box.innerHTML = mbox(s, `<p>Are these two holes connected? Look closely, then decide.</p>
+      <p class="pair">Pair ${S.i+1} of ${n}: <b>${a}</b> and <b>${b}</b></p>
+      <div class="row">${S.answered ? `<button type="button" class="primary" id="sortNext">Next pair</button>` : `<button type="button" data-ans="yes">Connected</button><button type="button" data-ans="no">Not connected</button>`}</div>
+      <p class="${S.cls}" aria-live="polite">${S.msg}</p>
+      ${S.wrong >= 2 && !S.answered ? `<p class="note">${s.hint}</p>` : ""}`);
+    box.querySelectorAll("[data-ans]").forEach(btn=>btn.onclick = ()=>{
+      const same = holes[a].node === holes[b].node, said = btn.dataset.ans === "yes";
+      if (same === said){
+        S.answered = true; S.cls = "msg good";
+        S.msg = same ? `Right! ${a} and ${b} share a strip.` : `Right! ${a} and ${b} are on different strips.`;
+        clearMarks(); lightNode(holes[a].node, "lit"); if (!same) lightNode(holes[b].node, "lit2");
+        if (S.i === n - 1) complete(s);
+        refresh();
+        const nb = document.getElementById("sortNext"); if (nb) nb.focus();
+      } else {
+        S.wrong++; S.cls = "msg bad";
+        S.msg = "Not quite. Tap the holes or press See underneath to check, then try again.";
+        refresh();
+      }
+    });
+    const nx = document.getElementById("sortNext");
+    if (nx) nx.onclick = ()=>{ S.i++; S.answered = false; S.wrong = 0; S.msg = ""; S.cls = "msg"; clearMarks(); refresh(); const f = document.querySelector("[data-ans]"); if (f) f.focus(); };
+  }
+};
+
+M.testList = {
+  init:()=>({res:{}}),
+  render(box,s,S){
+    const items = s.pairs.map(([a,b])=>{ const r = S.res[a+"|"+b]; return [r !== undefined, `Test <b>${a}</b> and <b>${b}</b>${r === undefined ? "" : r ? `: <span class="beep">beep!</span>` : ": no beep"}`]; });
+    box.innerHTML = mbox(s, `<p>Use the tester on each pair. Watch and listen for the beep.</p>${checklist(items)}${!testerOn && !done.has(s.key) ? `<p class="note">The tester is off. Press “Continuity tester” to turn it back on.</p>` : ""}`);
+  },
+  test(a,b,ok,s,S){
+    s.pairs.forEach(([p,q])=>{ if ((a===p && b===q) || (a===q && b===p)) S.res[p+"|"+q] = ok; });
+    if (s.pairs.every(([p,q])=>S.res[p+"|"+q] !== undefined)) complete(s);
+    refresh();
+  }
+};
+
+M.testAny = {
+  init:()=>({res:{}}),
+  render(box,s,S){
+    const items = s.tasks.map((t,i)=>[S.res[i] !== undefined, t.label + (S.res[i] === undefined ? "" : S.res[i] ? `: <span class="beep">beep!</span>` : ": no beep")]);
+    box.innerHTML = mbox(s, `<p>Use the tester to find out how the rails are wired.</p>${checklist(items)}${!testerOn && !done.has(s.key) ? `<p class="note">The tester is off. Press “Continuity tester” to turn it back on.</p>` : ""}`);
+  },
+  test(a,b,ok,s,S){
+    const na = holes[a].node, nb = holes[b].node;
+    s.tasks.forEach((t,i)=>{ if (t.fn(na,nb) || t.fn(nb,na)) S.res[i] = ok; });
+    if (s.tasks.every((t,i)=>S.res[i] !== undefined)) complete(s);
+    refresh();
+  }
+};
+
+M.pinHunt = {
+  init:()=>({i:0, wrong:0, msg:"", cls:"msg"}),
+  render(box,s,S){
+    const n = s.hunt.length, d = done.has(s.key);
+    clearMarks();
+    if (d){ box.innerHTML = mbox(s, `<p>You found pins ${s.hunt.join(", ")}. You can read a chip!</p><p class="${S.cls}">${S.msg}</p>`); return; }
+    const target = s.hunt[S.i];
+    if (S.wrong >= 2) lightNode(pinNode(target), "lit2");
+    box.innerHTML = mbox(s, `<p>Tap a hole that connects to <b>pin ${target}</b>.</p><p class="note">Pin ${S.i+1} of ${n}</p>
+      <p class="${S.cls}" aria-live="polite">${S.msg}</p>
+      ${S.wrong >= 2 ? `<p class="note">Hint: try one of the glowing holes. Pin 1 is bottom-left when the notch is on your left, and you count counterclockwise.</p>` : ""}`);
+  },
+  tap(id,s,S){
+    if (done.has(s.key)){ explore(id); return; }
+    const target = s.hunt[S.i], node = holes[id].node, pin = CHIP_PINS[node];
+    if (pin === target){
+      if (id === pinHole(node)){ S.msg = "That hole has the chip’s pin in it. Pick another hole in the same column."; S.cls = "msg bad"; }
+      else { S.msg = `Yes! ${id} connects to pin ${target}.`; S.cls = "msg good"; S.i++; S.wrong = 0; if (S.i >= s.hunt.length) complete(s); }
+    } else {
+      S.wrong++; S.cls = "msg bad";
+      S.msg = pin ? `${id} connects to pin ${pin}, not pin ${target}.` : `${id} isn’t connected to the chip at all.`;
+    }
+    readout.innerHTML = S.msg;
+    refresh();
+  }
+};
+
+function instr(t){
+  if (t.type === "wire") return `Place a <b>${t.color} wire</b> from <b>${nodeName(t.a)}</b> to <b>${nodeName(t.b)}</b>.`;
+  if (t.type === "led") return `Place the <b>LED</b>. Tap the long leg (+) hole first, in <b>${nodeName(t.a)}</b>. Then tap the short leg hole, in <b>${nodeName(t.b)}</b>.`;
+  return `Place the <b>${t.name.toLowerCase()}</b> from <b>${nodeName(t.a)}</b> to <b>${nodeName(t.b)}</b>.`;
+}
+const PRESS_WIN = "It lights up! Pressing the button closes the gap and completes the loop. Watch the yellow dots: that’s the current flowing. Let go and the loop breaks.";
+M.guided = {
+  init:()=>({bench:newBench(), i:0, wrong:0, msg:"", cls:"msg"}),
+  render(box,s,S){
+    const B = S.bench, tasks = s.tasks, all = S.i >= tasks.length;
+    const sim = drawBench(B);
+    const lit = !!(sim && sim.lit.size);
+    if (all && B.power && lit && s.finish === "power") complete(s);
+    clearMarks();
+    if (!all && S.wrong >= 2){ lightNode(tasks[S.i].a, "lit"); lightNode(tasks[S.i].b, "lit2"); }
+    const items = tasks.map((t,i)=>`<li class="${i < S.i ? "placed" : (i === S.i ? "next" : "")}">${t.name}${i < S.i ? `<span class="why">${t.why}</span>` : ""}</li>`).join("");
+    let status = "", scls = "msg";
+    if (all){
+      if (!B.power) status = s.finish === "press" ? "All parts are in. Turn on the power, then press and hold the button." : "All parts are in. Turn on the power!";
+      else if (lit){ scls = "msg good"; status = s.finish === "press" ? fl(PRESS_WIN) : fl("It glows! The moving yellow dots show the current flowing out of the + rail, through the resistor and the LED, and back to the − rail. That full loop is a circuit."); }
+      else status = s.finish === "press" ? (done.has(s.key) ? "Nice work! Press the button again any time." : "Power is on. Now press and hold the push button on the board, or use the button below.") : "No light. Check that every part is in the right spot.";
+    }
+    const rightPred = s.finish === "press" ? "no" : "yes";
+    const predFb = !S.predict ? "" : !B.power ? `<p class="note">Prediction saved: “${S.predict}.” Now turn on the power and find out!</p>`
+      : `<p class="note">You predicted “${S.predict}.” ${S.predict === rightPred ? "Good thinking, you were right!" : (s.finish === "press" ? "Not this time. The button leaves a gap in the loop until someone presses it." : "It does light! Every part is in place, so the loop is complete.")}</p>`;
+    box.innerHTML = mbox(s, `<p>Build this circuit yourself, one part at a time. Tap one hole for each end of the part.</p>
+      <ol class="parts">${items}</ol>
+      ${!all ? `<div class="try"><strong>Now:</strong> ${instr(tasks[S.i])}</div>${testerNote()}` : ""}
+      <p class="${S.cls}" aria-live="polite">${S.msg}</p>
+      ${!all && S.wrong >= 2 ? `<p class="note">Hint: use any of the glowing holes. Green is where one end goes, orange is where the other end goes.</p>` : ""}
+      ${all && !S.predict ? `<div class="try"><strong>Predict first:</strong> ${s.finish === "press" ? "When the power is on but nobody is pressing the button, will the LED be lit?" : "When you turn on the power, will the LED light up?"}</div><div class="row"><button type="button" data-pred="yes">Yes, it will</button><button type="button" data-pred="no">No, it won’t</button></div>` : ""}
+      ${all && S.predict ? `<div class="row"><button type="button" class="primary" id="gPower" aria-pressed="${B.power}">${B.power ? "Turn power off" : "Turn power on"}</button>${s.finish === "press" ? `<button type="button" id="gHold" class="holdbtn" ${B.power ? "" : "disabled"}>Press and hold the button</button>` : ""}</div><p id="gStatus" class="${scls}" aria-live="polite">${status}</p>${predFb}` : ""}
+      <div class="row"><button type="button" id="gUndo" ${S.i ? "" : "disabled"}>Undo last part</button><button type="button" id="gRestart" ${S.i ? "" : "disabled"}>Start this build over</button></div>${done.has(s.key) ? realCard(s.title.replace("Build it: ", ""), B) : ""}`);
+    box.querySelectorAll("[data-pred]").forEach(pb=>pb.onclick = ()=>{ S.predict = pb.dataset.pred; refresh(); const g2 = document.getElementById("gPower"); if (g2) g2.focus(); });
+    const pw = document.getElementById("gPower");
+    if (pw) pw.onclick = ()=>{ B.power = !B.power; B.pressed = false; refresh(); document.getElementById("gPower").focus(); };
+    const onPress = v=>{
+      B.pressed = v;
+      const sm = drawBench(B), on = !!(sm && sm.lit.size);
+      drawSchem();
+      if (v){
+        const p = document.getElementById("gStatus");
+        if (on && s.finish === "press" && S.i >= tasks.length){ complete(s); if (p){ p.className = "msg good"; p.textContent = fl(PRESS_WIN); } }
+      } else refresh();
+    };
+    pressHandler = B.parts.some(p=>p.type === "button") ? onPress : null;
+    const hb = document.getElementById("gHold");
+    if (hb) makeHold(hb, v=>{ onPress(v); if (!v){ const h = document.getElementById("gHold"); if (h) h.focus(); } });
+    document.getElementById("gUndo").onclick = ()=>{ B.parts.pop(); S.i--; B.power = false; B.pressed = false; S.wrong = 0; S.predict = null; S.msg = "Last part removed."; S.cls = "msg"; refresh(); };
+    document.getElementById("gRestart").onclick = ()=>{ S.bench = newBench(); S.i = 0; S.wrong = 0; S.predict = null; S.msg = "Starting over. Only the battery is left."; S.cls = "msg"; refresh(); };
+  },
+  tap(id,s,S){
+    const B = S.bench, t = s.tasks[S.i];
+    if (!t){ readout.innerHTML = "All the parts are placed. Use the buttons in the mission box."; return; }
+    if (B.pending === id){ B.pending = null; drawBench(B); readout.innerHTML = "Canceled. Tap a hole to start again."; return; }
+    if (BATTERY_HOLES.has(id)){ readout.innerHTML = "The battery wires are using that hole. Pick an empty one."; return; }
+    if (benchUsed(B, id)){ readout.innerHTML = "That hole already has a leg in it. Pick an empty hole."; return; }
+    if (!B.pending){
+      B.pending = id; drawBench(B);
+      readout.innerHTML = t.type === "led" ? `Long leg (+) in <b>${nice(id)}</b>. Now tap the hole for the short leg.` : `One end in <b>${nice(id)}</b>. Now tap the hole for the other end.`;
+      return;
+    }
+    const a = B.pending, na = holes[a].node, nb = holes[id].node;
+    B.pending = null;
+    const fwd = na === t.a && nb === t.b, rev = na === t.b && nb === t.a;
+    if (fwd || (rev && t.type !== "led")){
+      B.parts.push({id:nid++, type:t.type, a, b:id, color:COLORS[t.color]});
+      S.i++; S.wrong = 0; S.cls = "msg good"; S.msg = `${t.name} placed from ${nice(a)} to ${nice(id)}.`;
+    } else {
+      S.wrong++; S.cls = "msg bad";
+      if (rev) S.msg = `Almost! The LED is backwards. Tap the long leg (+) hole first, in ${nodeName(t.a)}.`;
+      else if (t.type === "led" && nb === t.a) S.msg = `The long leg (+) goes in ${nodeName(t.a)}. Tap that spot first.`;
+      else if ([na,nb].some(n=>n === t.a || n === t.b)){
+        const right = (na === t.a || na === t.b) ? na : nb;
+        S.msg = `One end is in the right spot. The other end goes in ${nodeName(right === t.a ? t.b : t.a)}.`;
+      }
+      else S.msg = `Not quite. This part goes from ${nodeName(t.a)} to ${nodeName(t.b)}.`;
+    }
+    readout.innerHTML = S.msg;
+    refresh();
+  }
+};
+
+const ANSWERS = {
+  none:"Not that one. With no resistor, the LED burns out!",
+  r47:"Too much electricity. The LED would get hot and wear out fast.",
+  r220:"Exactly! Bright enough to see and safe for the LED. 220 Ω is a go-to resistor for LED projects.",
+  r1k:"That one is safe, but the light is dimmer than it needs to be. Which one was bright and safe?",
+  r100k:"Too much resistance. You can barely see the light."
+};
+M.resistor = {
+  init:()=>({tried:new Set(), msg:"", cls:"msg"}),
+  render(box,s,S){
+    S.tried.add(resChoice);
+    const r = RES[resChoice];
+    drawParts(true);
+    const rcls = r.mood === "ok" ? "msg good" : (r.mood === "burnt" || r.mood === "high") ? "msg bad" : "msg";
+    const q = S.tried.size >= 5
+      ? `<p><b>Which resistor is the best choice for this LED?</b></p><div class="row" role="group" aria-label="Your answer">${Object.entries(RES).map(([k,v])=>`<button type="button" data-ans="${k}">${v.label}</button>`).join("")}</div><p class="${S.cls}" aria-live="polite">${S.msg}</p>`
+      : `<p class="note">Tried ${S.tried.size} of 5</p>`;
+    box.innerHTML = `<div class="row" role="group" aria-label="Choose a resistor">${Object.entries(RES).map(([k,v])=>`<button type="button" data-r="${k}" aria-pressed="${k===resChoice}">${v.label}</button>`).join("")}</div>
+      <div class="meter"><span class="meter-label" id="meterLbl">How much electricity flows</span>
+        <div class="meter-track" role="meter" aria-labelledby="meterLbl" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${r.meter}"><div class="meter-fill ${r.mood}" style="width:${r.meter}%"></div></div></div>
+      <p class="${rcls}" aria-live="polite">${r.msg}</p>
+      ${mbox(s, `<p>Try all 5 resistors and watch what happens to the LED. Notice the pattern: the bigger the number, the less electricity flows.</p>${q}`)}`;
+    box.querySelectorAll("[data-r]").forEach(b=>b.onclick = ()=>{ resChoice = b.dataset.r; refresh(); document.querySelector(`[data-r="${resChoice}"]`).focus(); });
+    box.querySelectorAll("[data-ans]").forEach(b=>b.onclick = ()=>{
+      const k = b.dataset.ans;
+      S.msg = ANSWERS[k]; S.cls = k === "r220" ? "msg good" : "msg bad";
+      if (k === "r220") complete(s);
+      refresh();
+    });
+  }
+};
+
+const RED = {type:"wire", color:"red", a:"tp6", b:"a6"};
+const RESI = {type:"resistor", a:"c6", b:"c12"};
+const LED_OK = {type:"led", a:"b12", b:"b14"};
+const BLACK = {type:"wire", color:"black", a:"a14", b:"tn14"};
+const PUZZLES = [
+  {title:"The LED won’t light", clue:"Every part is plugged in, but the LED stays dark.",
+   hint:"Look at the + mark on the LED. The long leg (+) should be on the side that leads back to the + rail.",
+   explain:"The LED was backwards. LEDs only let electricity through one way.",
+   parts:[RED, RESI, {type:"led", a:"b14", b:"b12"}, BLACK]},
+  {title:"Almost a loop", clue:"Everything looks right… almost.",
+   hint:"Use the continuity tester. Is the LED’s short leg connected to the − rail?",
+   explain:"The black wire was one column off, so the loop was broken.",
+   parts:[RED, RESI, LED_OK, {type:"wire", color:"black", a:"a15", b:"tn15"}]},
+  {title:"Skipped light", clue:"The LED is plugged in, but electricity goes right past it.",
+   hint:"Check which strip each LED leg is in.",
+   explain:"Both legs were on the same strip, so electricity skipped the LED. The legs must go in different columns.",
+   parts:[RED, RESI, {type:"led", a:"d12", b:"e12"}, BLACK]},
+  {title:"The way back", clue:"Electricity goes in, but it can’t get home.",
+   hint:"Electricity needs a path from the LED’s short leg back to the − rail.",
+   explain:"A wire from column 14 back to the − rail completes the loop.",
+   parts:[RED, RESI, LED_OK]},
+  {title:"Hot battery!", clue:"Nothing lights, and the battery is getting hot.",
+   hint:"Find a wire that connects the + rail straight to the − rail.",
+   explain:"That wire was a short circuit. Electricity took the easy path and skipped everything else.",
+   parts:[RED, RESI, LED_OK, BLACK, {type:"wire", color:"red", a:"tp22", b:"tn22"}]},
+  {title:"Puff of smoke", clue:"The LED burned out the moment the power came on.",
+   hint:"Every LED needs a resistor in its loop. Move the red wire, then add a resistor between it and the LED.",
+   explain:"The resistor protects the LED by limiting how much electricity flows.",
+   parts:[{type:"wire", color:"red", a:"tp12", b:"a12"}, LED_OK, BLACK]}
+];
+function puzzleBench(i){ const B = newBench(PUZZLES[i].parts); B.power = true; B.tool = "remove"; return B; }
+M.fix = {
+  init:()=>({pi:0, bench:puzzleBench(0), changes:0, hint:false}),
+  render(box,s,S){
+    const Pz = PUZZLES[S.pi], B = S.bench;
+    B.noTrace = !S.hint;
+    const sim = drawBench(B), last = S.pi === PUZZLES.length - 1;
+    const fixed = !!(sim && !sim.short && !sim.burnt.size && sim.lit.size);
+    if (fixed && last) complete(s);
+    const [scls, smsg] = benchStatus(B, sim);
+    box.innerHTML = mbox(s, `<p class="count">Puzzle ${S.pi+1} of ${PUZZLES.length}</p>
+      <h3>${Pz.title}</h3><p>${Pz.clue}</p>
+      ${fixed ? `<p class="msg good">Fixed! ${Pz.explain}</p>${!last ? `<div class="row"><button type="button" class="primary" id="fxNext">Next puzzle</button></div>` : `<p>You fixed every circuit. You’re a real debugger!</p>`}`
+        : `${toolsRow(B)}${testerNote()}<p class="${scls}" aria-live="polite">${smsg}</p>
+           ${S.hint ? `<p class="note">Hint: ${Pz.hint}</p>` : (S.changes >= 2 ? `<div class="row"><button type="button" id="fxHint">Show a hint</button></div>` : "")}`}
+      <div class="row"><button type="button" id="fxReset">Reset this puzzle</button></div>`);
+    wireTools(box, B);
+    const nx = document.getElementById("fxNext");
+    if (nx) nx.onclick = ()=>{ S.pi++; S.bench = puzzleBench(S.pi); S.changes = 0; S.hint = false; refresh(); readout.innerHTML = PUZZLES[S.pi].clue; document.getElementById("stepTitle").focus({preventScroll:true}); };
+    const hb = document.getElementById("fxHint");
+    if (hb) hb.onclick = ()=>{ S.hint = true; refresh(); };
+    document.getElementById("fxReset").onclick = ()=>{ S.bench = puzzleBench(S.pi); S.changes = 0; refresh(); readout.innerHTML = "Puzzle reset."; };
+  },
+  tap(id,s,S){ if (benchTap(S.bench, id)) S.changes++; refresh(); }
+};
+
+const isBottom = id => /^[f-j]\d/.test(id) || /^b[pn]\d/.test(id);
+const FREE = [
+  {label:"Light one LED", fn:(B,sim)=>sim.lit.size >= 1},
+  {label:"Light two LEDs at the same time", fn:(B,sim)=>sim.lit.size >= 2},
+  {label:"Make a button turn an LED on and off", fn:(B)=>{ const on = simulate(B,true), off = simulate(B,false); return !on.short && on.lit.size > off.lit.size; }},
+  {label:"Light an LED with both legs in the bottom half (rows f–j). Hint: wires can connect the top rails to the bottom rails.", fn:(B,sim)=>B.parts.some(p=>p.type === "led" && sim.lit.has(p.id) && isBottom(p.a) && isBottom(p.b))}
+];
+function evalFree(S, sim){ if (!sim || sim.short) return; FREE.forEach((c,i)=>{ if (c.fn(S.bench, sim)) S.stars.add(i); }); }
+M.free = {
+  init:()=>({bench:newBench(), stars:new Set()}),
+  render(box,s,S){
+    const B = S.bench, sim = drawBench(B);
+    evalFree(S, sim);
+    const [scls, smsg] = benchStatus(B, sim);
+    const hasBtn = B.parts.some(p=>p.type === "button");
+    box.innerHTML = `${toolsRow(B)}${testerNote()}
+      <div class="row">
+        <button type="button" class="primary" id="sbPower" aria-pressed="${B.power}">${B.power ? "Turn power off" : "Turn power on"}</button>
+        ${hasBtn ? `<button type="button" id="sbHold" class="holdbtn">Press and hold buttons</button>` : ""}
+        <button type="button" id="sbUndo" ${B.parts.length ? "" : "disabled"}>Undo</button>
+        <button type="button" id="sbClear" ${B.parts.length ? "" : "disabled"}>Clear board</button>
+      </div>
+      <p id="sbStatus" class="${scls}" aria-live="polite">${smsg}</p>
+      <h3>Challenges</h3>
+      ${checklist(FREE.map((c,i)=>[S.stars.has(i), c.label + (S.stars.has(i) ? ` <span class="star">★ Done!</span>` : "")]))}
+      <p class="note">Stars earned: ${S.stars.size} of ${FREE.length}. The power has to be on for a challenge to count.</p>${realCard("my own circuit", B)}`;
+    wireTools(box, B);
+    document.getElementById("sbPower").onclick = ()=>{ B.power = !B.power; refresh(); document.getElementById("sbPower").focus(); };
+    document.getElementById("sbUndo").onclick = ()=>{ B.parts.pop(); B.pending = null; refresh(); readout.innerHTML = "Last part removed."; };
+    document.getElementById("sbClear").onclick = ()=>{ B.parts = []; B.pending = null; refresh(); readout.innerHTML = "Board cleared. Only the battery is left."; };
+    const onPress = (v, pid)=>{
+      if (pid){ if (v) B.down.add(pid); else B.down.delete(pid); } else B.pressed = v;
+      const sm = drawBench(B); evalFree(S, sm);
+      if (v){ const [c,m] = benchStatus(B, sm); const p = document.getElementById("sbStatus"); p.className = c; p.textContent = m; }
+      else refresh();
+    };
+    pressHandler = hasBtn ? onPress : null;
+    const hb = document.getElementById("sbHold");
+    if (hb) makeHold(hb, v=>{ onPress(v); if (!v){ const h = document.getElementById("sbHold"); if (h) h.focus(); } });
+  },
+  tap(id,s,S){ benchTap(S.bench, id); refresh(); }
+};
+
+const REVIEW = [
+  {parts:[{type:"wire", color:"red", a:"tp4", b:"a4"}, {type:"resistor", a:"c4", b:"c9"}, {type:"led", a:"b11", b:"b9"}, {type:"wire", color:"black", a:"a11", b:"tn11"}],
+   opts:["The resistor is too big.", "The LED is in backwards.", "The black wire is on the wrong rail."], answer:1,
+   explain:"The LED’s long leg (+) is in column 11, the side that leads to the − rail. Flip it so the long leg is in column 9.",
+   fb:["220 Ω is a fine size for an LED. Look at the + mark on the LED.", "", "The black wire goes to the − rail, which is right. Look at the + mark on the LED."]},
+  {parts:[{type:"wire", color:"red", a:"tp5", b:"a5"}, {type:"resistor", a:"c5", b:"c11"}, {type:"led", a:"b11", b:"b13"}, {type:"wire", color:"black", a:"a13", b:"tn13"}, {type:"wire", color:"red", a:"tp24", b:"tn24"}],
+   opts:["The LED needs to be flipped.", "There’s no resistor.", "A wire connects + straight to −, making a short circuit."], answer:2,
+   explain:"The red wire in column 24 links the + rail to the − rail. Electricity takes that easy path and skips the LED, and the battery heats up.",
+   fb:["The LED’s long leg is on the + side, so it’s facing the right way. Watch the battery: it’s flashing.", "There’s a resistor from column 5 to column 11. Look for a wire going straight from + to −.", ""]},
+  {parts:[{type:"wire", color:"red", a:"tp7", b:"a7"}, {type:"resistor", a:"c7", b:"c12"}, {type:"led", a:"e12", b:"f14"}, {type:"wire", color:"black", a:"a14", b:"tn14"}],
+   opts:["The battery is dead.", "The LED’s short leg is in the bottom half of column 14, but the black wire is in the top half.", "The resistor is in backwards."], answer:1,
+   explain:"The valley splits column 14 into two strips. The black wire has to be on the same strip as the LED’s short leg.",
+   fb:["The battery is fine. Try the tester: is the LED’s short leg connected to the − rail?", "", "Resistors work in either direction, so this one is fine."]},
+  {parts:[{type:"wire", color:"red", a:"tp8", b:"a8"}, {type:"led", a:"b8", b:"b10"}, {type:"wire", color:"black", a:"a10", b:"tn10"}],
+   opts:["There’s no resistor, so the LED burned out.", "The LED is in the bottom half of the board.", "The red wire should be black."], answer:0,
+   explain:"Every LED needs a resistor in its loop to limit how much electricity flows.",
+   fb:["", "The LED is in the top half, rows a–e. Look at what’s missing between the red wire and the LED.", "Wire color doesn’t change how electricity flows. Colors just help people read a circuit."]},
+  {parts:[{type:"wire", color:"red", a:"tp6", b:"a6"}, {type:"resistor", a:"c6", b:"c12"}, {type:"led", a:"b12", b:"b14"}, {type:"wire", color:"black", a:"a14", b:"bn14"}],
+   opts:["The resistor is backwards.", "The black wire goes to the bottom − rail, which isn’t connected to the battery.", "The LED needs a second resistor."], answer:1,
+   explain:"The bottom rails are separate from the top rails. Move the black wire to the top − rail, or connect the two − rails with a wire.",
+   fb:["Resistors work in either direction, so it can’t be backwards.", "", "One resistor is enough for one LED. Follow the black wire to see where it goes."]},
+  {parts:[{type:"wire", color:"red", a:"tp9", b:"a9"}, {type:"resistor", a:"c9", b:"c15"}, {type:"led", a:"b15", b:"d15"}, {type:"wire", color:"black", a:"a17", b:"tn17"}],
+   opts:["Both LED legs are in column 15, which is one strip.", "The black wire is too long.", "The battery is in backwards."], answer:0,
+   explain:"With both legs on the same strip, electricity never has to go through the LED. Put the short leg in column 17, where the black wire is.",
+   fb:["", "Wire length doesn’t matter here. Look at which columns the LED’s legs are in.", "The battery’s red wire is on the + rail, so it’s fine. Look at the LED’s legs."]},
+  {parts:[{type:"wire", color:"red", a:"tp5", b:"a5"}, {type:"resistor", a:"c5", b:"c10"}, {type:"led", a:"b10", b:"b12"}],
+   opts:["The LED is the wrong color.", "The resistor should come after the LED.", "Nothing connects the LED back to the − rail."], answer:2,
+   explain:"Electricity needs a full loop. Add a wire from column 12 to the − rail.",
+   fb:["LED color doesn’t stop a circuit from working.", "A resistor works on either side of the LED, so that’s fine.", ""]},
+  {parts:[{type:"wire", color:"red", a:"tp8", b:"a8"}, {type:"resistor", a:"b8", b:"d8"}, {type:"led", a:"c8", b:"c10"}, {type:"wire", color:"black", a:"a10", b:"tn10"}],
+   opts:["The LED is in backwards.", "Both resistor legs are in column 8, so electricity skips it and the LED burned out.", "The red wire is in the − rail."], answer:1,
+   explain:"Both resistor legs share one strip, so the resistor does nothing. Stretch it across to another column, and move the LED’s long leg there.",
+   fb:["The LED’s long leg is on the + side. Look at where the resistor’s legs are.", "", "The red wire is in the + rail, the one with the red line."]},
+  {parts:[{type:"wire", color:"red", a:"tn6", b:"a6"}, {type:"resistor", a:"c6", b:"c12"}, {type:"led", a:"b12", b:"b14"}, {type:"wire", color:"black", a:"a14", b:"tn14"}],
+   opts:["The red wire is plugged into the − rail, so no power reaches the circuit.", "The LED is in backwards.", "There are too many wires."], answer:0,
+   explain:"Both wires go to the − rail. Move the red wire to the + rail, the one with the red line.",
+   fb:["", "The LED’s long leg faces the resistor, which is right. Check where each wire meets the rails.", "Two wires is the right number. Check which rail each one goes to."]},
+  {parts:[{type:"wire", color:"red", a:"tp6", b:"a6"}, {type:"resistor", a:"c6", b:"c11"}, {type:"led", a:"b12", b:"b14"}, {type:"wire", color:"black", a:"a14", b:"tn14"}],
+   opts:["The resistor is too small.", "The black wire should go to the + rail.", "The resistor ends in column 11, but the LED starts in column 12."], answer:2,
+   explain:"Side-by-side columns aren’t connected. Move the resistor’s leg to column 12, or the LED’s long leg to column 11.",
+   fb:["220 Ω is just right for an LED. Look closely at where the resistor ends.", "The black wire belongs on the − rail. Look closely at where the resistor ends.", ""]}
+];
+const REVIEW_N = 5;
+function reviewBench(i){ const B = newBench(REVIEW[i].parts); B.power = true; B.noTrace = true; return B; }
+M.review = {
+  init:()=>{ const order = shuffle(REVIEW.map((_, i)=>i)).slice(0, REVIEW_N);
+    return {i:0, order, perm:order.map(()=>shuffle([0,1,2])), bench:reviewBench(order[0]), answered:false, missed:false, firstTry:0, picked:null, msg:"", cls:"msg", finished:false}; },
+  render(box,s,S){
+    const R = REVIEW[S.order[S.i]];
+    drawBench(S.bench);
+    if (S.finished){
+      box.innerHTML = `<div class="mission done"><p class="mission-h">Review complete!</p>
+        <p>You got <b>${S.firstTry} of ${REVIEW_N}</b> right on the first try${studentName ? `, ${esc(studentName)}` : ""}.</p>
+        <div class="row"><button type="button" id="rvAgain">Try the review again</button></div></div>`;
+      document.getElementById("rvAgain").onclick = ()=>{ delete MS[s.key]; clearMarks(); clearProbes(); refresh(); };
+      return;
+    }
+    box.innerHTML = `<div class="mission"><p class="mission-h">Example ${S.i+1} of ${REVIEW_N}</p>
+      <p><b>What’s wrong with this circuit?</b></p>
+      <div class="choices" role="group" aria-label="Answer choices">${S.perm[S.i].map(k=>`<button type="button" class="choice${S.picked === k ? (k === R.answer ? " right" : " wrong") : ""}" data-opt="${k}" ${S.answered ? "disabled" : ""}>${R.opts[k]}</button>`).join("")}</div>
+      <p class="${S.cls}" aria-live="polite">${S.msg}</p>
+      ${S.answered ? `<div class="row"><button type="button" class="primary" id="rvNext">${S.i < REVIEW_N - 1 ? "Next example" : "See my score"}</button></div>` : ""}
+    </div>`;
+    box.querySelectorAll("[data-opt]").forEach(b=>b.onclick = ()=>{
+      const k = +b.dataset.opt; S.picked = k;
+      if (k === R.answer){ S.answered = true; if (!S.missed) S.firstTry++; S.cls = "msg good"; S.msg = "Correct! " + R.explain; }
+      else { S.missed = true; S.cls = "msg bad"; S.msg = "Not quite. " + R.fb[k]; }
+      refresh();
+      const f = document.getElementById("rvNext") || document.querySelector(`[data-opt="${k}"]`); if (f) f.focus();
+    });
+    const nx = document.getElementById("rvNext");
+    if (nx) nx.onclick = ()=>{
+      if (S.i >= REVIEW_N - 1) S.finished = true;
+      else { S.i++; S.bench = reviewBench(S.order[S.i]); }
+      S.answered = false; S.missed = false; S.picked = null; S.msg = ""; S.cls = "msg";
+      clearMarks(); clearProbes(); refresh();
+      document.getElementById("stepTitle").focus({preventScroll:true});
+    };
+  }
+};
+
+M.recap = {
+  render(box){
+    const gated = steps.filter(x=>x.gated), n = gated.filter(x=>done.has(x.key)).length;
+    const stars = MS.free ? MS.free.stars.size : 0;
+    const all = n === gated.length;
+    const who = studentName ? `<p class="cert-name">${esc(studentName)}</p>` : "";
+    box.innerHTML = `<div class="badge${all ? " earned" : ""}">
+      ${all ? `<p class="badge-title">Breadboard Certified!</p>${who}<p>You finished all ${gated.length} missions${stars ? ` and earned ${stars} of ${FREE.length} Free build stars` : ""}. Show your teacher this screen.</p><p>The <b>Projects</b> are now unlocked. Press Projects at the top of this panel to try them.</p><div class="row" style="justify-content:center"><button type="button" data-print="cert">Print my certificate</button></div>`
+            : `${who}<p class="badge-title">${n} of ${gated.length} missions done</p><p>Finish the rest to become Breadboard Certified.</p>`}
+    </div>`;
+  }
+};
+
+/* ---------- steps ---------- */
+const GUIDED_LED = [
+  {type:"wire", color:"red", a:"TP", b:"T6", name:"Red wire", why:"Carries power from the + rail into column 6."},
+  {type:"resistor", a:"T6", b:"T12", name:"Resistor", why:"Slows the electricity down so the LED doesn’t burn out."},
+  {type:"led", a:"T12", b:"T14", name:"LED", why:"Long leg (+) in column 12, short leg in column 14. Different strips!"},
+  {type:"wire", color:"black", a:"T14", b:"TN", name:"Black wire", why:"Brings electricity back to the − rail. The loop is complete."}
+];
+const GUIDED_BTN = [
+  {type:"wire", color:"red", a:"TP", b:"T6", name:"Red wire", why:"Carries power from the + rail into column 6."},
+  {type:"button", a:"T6", b:"T9", name:"Push button", why:"Inside there’s a gap. Pressing the button closes the gap between column 6 and column 9."},
+  {type:"resistor", a:"T9", b:"T15", name:"Resistor", why:"Protects the LED."},
+  {type:"led", a:"T15", b:"T17", name:"LED", why:"Long leg (+) in column 15, short leg in column 17."},
+  {type:"wire", color:"black", a:"T17", b:"TN", name:"Black wire", why:"Brings electricity back to the − rail."}
+];
+const steps = [
+  {key:"meet", type:"explore3", gated:true, title:"Meet the breadboard",
+   body:`<p>A breadboard is a board for building circuits. You push wires and parts into its holes. No glue, no tape, and no melting metal together (that’s called soldering).</p>
+         <p>Made a mistake? Just pull the part out and try again. That’s why engineers use breadboards to test ideas quickly.</p>
+         <p class="fun">Fun fact: long ago, people really did build circuits on wooden boards made for slicing bread. The name stuck.</p>`},
+  {key:"clips", type:"findAll", target:"c4", gated:true, title:"Every hole hides a clip",
+   body:`<p>Under each hole is a tiny metal clip. When you push a wire in, the clip grabs it and holds on.</p>
+         <p>Here’s the secret: some holes share the same piece of metal, so they are <b>connected</b>. Electricity can travel between connected holes.</p>`,
+   readout:"Tap holes to hunt for the ones connected to c4."},
+  {key:"under", type:"strips5", xray:true, gated:true, title:"Look underneath",
+   body:`<p>We turned on X-ray view so you can see the metal strips hiding inside the board.</p>
+         <p>Holes on the <b>same</b> strip are connected. Holes on <b>different</b> strips are not.</p>`},
+  {key:"cols", type:"sort", gated:true, title:"Columns of five",
+   pairs:[["a7","b7"],["a7","a8"],["c12","e12"],["d3","d4"],["b20","e20"]],
+   hint:"Hint: in the middle, holes connect up and down in a column, not side to side.",
+   body:`<p>In the middle of the board, each numbered column has a strip that connects five holes: <b>a, b, c, d, and e</b>.</p>
+         <p>Think of five friends holding the same rope. Tug one end, and they all feel it.</p>
+         <p>Holes that sit side by side, like a7 and a8, are on different strips. They are <b>not</b> connected.</p>`},
+  {key:"valley", type:"sort", chip:true, gated:true, title:"The valley in the middle",
+   pairs:[["e7","f7"],["f9","j9"],["e21","f21"]],
+   hint:"Hint: the valley splits every column into two separate strips.",
+   body:`<p>See the gap running across the center? It splits each column into two separate strips: <b>a–e</b> on top and <b>f–j</b> on the bottom.</p>
+         <p>So e7 and f7 look like neighbors, but they are <b>not</b> connected.</p>
+         <p>Chips (the black rectangles with legs) sit right across the valley. That way each leg gets its own strip.</p>`},
+  {key:"tester", type:"testList", tester:true, gated:true, title:"Test it like an engineer",
+   pairs:[["a3","e3"],["e3","f3"],["a3","a4"]],
+   body:`<p>Real engineers don’t guess which holes are connected. They check with a <b>continuity tester</b>, a tool with two probes. It’s often one of the settings on a multimeter.</p>
+         <p>Tap one hole for the red probe and another for the black probe. If electricity can travel between them, the tester <b>beeps</b>. No beep means no connection.</p>
+         <p class="note">Turn your sound on to hear the beep.</p>`},
+  {key:"rails", type:"testAny", tester:true, gated:true, title:"The power rails",
+   tasks:[
+     {label:"Test two different holes on the <b>top + rail</b>", fn:(p,q)=>p==="TP" && q==="TP"},
+     {label:"Test a hole on the <b>top + rail</b> and one on the <b>top − rail</b>", fn:(p,q)=>p==="TP" && q==="TN"},
+     {label:"Test a hole on the <b>top + rail</b> and one on the <b>bottom + rail</b>", fn:(p,q)=>p==="TP" && q==="BP"}
+   ],
+   body:`<p>The long rows along the top and bottom edges are the <b>power rails</b>. Each one runs the whole length of the board, left to right.</p>
+         <p>The red line marks <b>+</b>, where power comes in. The blue line marks <b>−</b>, called ground. That’s the path back to the battery.</p>
+         <p>Plug your battery into the rails, and every part on the board can reach power with a short wire.</p>
+         <p class="note">Heads up: on some big breadboards, the rails are cut in half in the middle. If something won’t work, check for a break.</p>`},
+  {key:"chip", type:"pinHunt", chip:true, pins:true, gated:true, hunt:[1,6,3], title:"Meet the chip",
+   body:`<p>A chip, also called an <b>integrated circuit</b> (IC), is a tiny circuit packed inside a black plastic case. Some chips count, some keep time, and some control motors.</p>
+         <p>Its metal legs are called <b>pins</b>. This chip has 8. To find pin 1, look for the notch, the little half-circle dent on one end. With the notch on your left, pin 1 is the bottom-left pin. Then count counterclockwise: across the bottom, then back along the top.</p>
+         <p>To connect a wire to a pin, plug into any other hole in that pin’s column. The strip does the rest.</p>`},
+  {key:"led", type:"guided", gated:true, tasks:GUIDED_LED, finish:"power", title:"Build it: light an LED",
+   body:`<p>Time to build! The battery is already plugged into the top rails. Follow each instruction and tap the holes yourself.</p>
+         <p class="note">Electricity needs a full loop: out of the + rail, through the parts, and back into the − rail.</p>`,
+   readout:"Follow the instruction in the mission box."},
+  {key:"res", type:"resistor", gated:true, title:"Pick the right resistor",
+   body:`<p>Remember the resistor? It slows electricity down. Resistors come in different strengths, measured in <b>ohms</b> (written Ω). The colored stripes are a code that tells you which one you have.</p>`,
+   readout:"Watch the stripes on the resistor change as you pick."},
+  {key:"btn", type:"guided", gated:true, tasks:GUIDED_BTN, finish:"press", title:"Build it: add a push button",
+   body:`<p>What about a doorbell or a flashlight? Those use buttons.</p>
+         <p>A push button is like a drawbridge in the loop. When it’s up, there’s a gap and electricity stops. Press it down, the gap closes, and electricity flows across.</p>`,
+   readout:"Follow the instruction in the mission box."},
+  {key:"fix", type:"fix", gated:true, title:"Fix my circuit",
+   body:`<p>Engineers spend a lot of time <b>debugging</b>: finding and fixing problems. Each circuit has one problem. Use the tools to fix it. The power is already on, so you’ll know right away when it works.</p>
+         <p class="note">Choose Remove a part and tap a leg to take a part out. The continuity tester can help you hunt for broken connections.</p>`,
+   readout:"Find the problem and fix it."},
+  {key:"free", type:"free", title:"Free build",
+   body:`<p>Now you’re the engineer. The battery is plugged into the top rails. Pick a part, then tap two holes to place it.</p>
+         <p class="note">For an LED, tap the long leg (+) hole first. The continuity tester works here too.</p>`,
+   readout:"Pick a part, then tap two holes to place it."},
+  {key:"done", type:"recap", final:true, title:"You did it",
+   body:`<p>Here are the rules to remember:</p>
+         <ol class="recap">
+           <li>In the middle, each column’s five holes are connected: a–e together, and f–j together.</li>
+           <li>Holes side by side in a row are <b>not</b> connected.</li>
+           <li>The valley splits the top half from the bottom half. Chips sit across it, and pin 1 is next to the notch.</li>
+           <li>The rails run the long way. Red <b>+</b> is power, blue <b>−</b> is ground.</li>
+           <li>A continuity tester beeps when two spots are connected.</li>
+           <li>Electricity only flows in a full loop from + back to −.</li>
+           <li>Resistors control the flow: the bigger the number, the less electricity. Never wire an LED without one.</li>
+           <li>A push button opens and closes a gap in the loop, like a drawbridge.</li>
+         </ol>
+         <p>Ready to test yourself? Press Next for the review.</p>`},
+  {key:"review", type:"review", title:"Review: What’s wrong?",
+   body:`<p>Each of these 5 circuits has one problem. Study the board, then pick the answer that explains what’s wrong.</p>
+         <p class="note">You can tap holes, use See underneath, or use the continuity tester to investigate.</p>`,
+   readout:"Study the circuit. What’s wrong with it?"}
+];
+
+/* teacher notes are encrypted; the PIN unlocks them */
+const LOCKED = {salt:"M0uE/g40LNfE/xJ30tMzsg==", iv:"Eoo12py5dNlEzEWN", data:"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"};
+let NOTES = {};
+
+/* ---------- projects ---------- */
+const NO_PRESS = ()=>({pressAll:false, pressIds:new Set()});
+const firstChip = (B, kind) => B.parts.find(p=>p.type === "chip" && p.kind === kind);
+const ledsOf = B => B.parts.filter(p=>p.type === "led");
+const noBurn = sims => sims.every(s=>!s.burnt.size && !s.short);
+function chipSim(B, ch, state, extra){ const o = Object.assign(NO_PRESS(), extra || {}); if (ch) o.chip = {[ch.id]:state}; return simulate(B, o); }
+const PWR_HINT = "Wire the chip’s + pin column (top left) to the + rail and its − pin column (top right) to the − rail.";
+const BURN_HINT = "Every LED needs a resistor somewhere in its loop.";
+
+const PROJECTS = [
+  {key:"p-holiday", id:"holiday", type:"project", title:"Holiday lights", sound:"jingle",
+   blurb:"Blinking lights and a button that plays Jingle Bells.",
+   tools:["redwire","blackwire","resistor","led-red","led-green","led-yellow","button","buzzer","chip-blinker","move","remove"],
+   goal:`<p>Build a string of holiday lights that blink on their own, plus a button that plays a jingle on a buzzer.</p>`,
+   pins:`<b>Blinker chip:</b> tap a hole in row e or f to place it across the valley. Its <b>+</b> pin (top left) goes to the + rail and its <b>−</b> pin (top right) goes to the − rail. Outputs <b>A</b> and <b>B</b> (bottom left) take turns switching on. The bottom rails are already wired to the battery.`,
+   checks:[
+     {label:"The blinker chip is powered", hint:PWR_HINT},
+     {label:"At least 3 LEDs blink", hint:"Wire LEDs from output A or B, through a resistor, to the bottom − rail. The long leg (+) goes on the chip’s side."},
+     {label:"No LEDs burn out", hint:BURN_HINT},
+     {label:"A button plays the jingle on the buzzer", hint:"Make a loop: + rail, a button, the buzzer (long leg toward the button), then the − rail."}],
+   stretch:{label:"Two groups of lights blink in turns, one on output A and one on output B", hint:"Wire a second group of LEDs, with its own resistor, to output B."},
+   test(B){
+     const ch = firstChip(B, "blinker"), base = simulate(B, NO_PRESS());
+     const powered = !!(ch && base.chips[ch.id].powered);
+     let onlyA = [], onlyB = [], sims = [base];
+     if (powered){
+       const sA = chipSim(B, ch, {phase:0}), sB = chipSim(B, ch, {phase:1}); sims.push(sA, sB);
+       onlyA = ledsOf(B).filter(p=>sA.lit.has(p.id) && !sB.lit.has(p.id));
+       onlyB = ledsOf(B).filter(p=>sB.lit.has(p.id) && !sA.lit.has(p.id));
+     }
+     const on = simulate(B, {pressAll:true});
+     const jingle = !on.short && [...on.buzz].some(id=>!base.buzz.has(id));
+     return {main:[powered, onlyA.length + onlyB.length >= 3, noBurn(sims), jingle], stretch:onlyA.length > 0 && onlyB.length > 0};
+   }},
+  {key:"p-traffic", id:"traffic", type:"project", title:"Traffic light",
+   blurb:"Red, yellow, and green lights that change in order, plus a crosswalk button.",
+   tools:["redwire","blackwire","resistor","led-red","led-yellow","led-green","button","chip-sequencer","move","remove"],
+   goal:`<p>Build a traffic light. The sequencer chip switches its <b>R</b>, <b>Y</b>, and <b>G</b> outputs on in order: red, then green, then yellow. Wire a red, a yellow, and a green LED to the matching outputs.</p>`,
+   pins:`<b>Sequencer chip:</b> <b>+</b> (top left) to the + rail, <b>−</b> (top right) to the − rail. Outputs <b>R</b>, <b>Y</b>, and <b>G</b> are on the bottom row, from the left. <b>BTN</b> (top row, second from left) is for the stretch goal. The bottom rails are already wired to the battery.`,
+   checks:[
+     {label:"The sequencer chip is powered", hint:PWR_HINT},
+     {label:"A red LED lights when R is on", hint:"Wire output R through a resistor to a red LED, then to the − rail."},
+     {label:"A yellow LED lights when Y is on", hint:"Wire output Y through a resistor to a yellow LED, then to the − rail."},
+     {label:"A green LED lights when G is on", hint:"Wire output G through a resistor to a green LED, then to the − rail."},
+     {label:"No LEDs burn out", hint:BURN_HINT}],
+   stretch:{label:"A crosswalk button makes the light change sooner", hint:"Put a button between the + rail and the chip’s BTN pin column (top row, second from left)."},
+   test(B){
+     const ch = firstChip(B, "sequencer"), base = simulate(B, NO_PRESS());
+     const powered = !!(ch && base.chips[ch.id].powered);
+     const s = {}; ["R","Y","G"].forEach(L=>{ s[L] = powered ? chipSim(B, ch, {light:L, t:0}) : base; });
+     const only = (L, color) => powered && ledsOf(B).some(p=>(p.color || "r") === color && s[L].lit.has(p.id) && ["R","Y","G"].every(o=>o === L || !s[o].lit.has(p.id)));
+     const pressed = ch && simulate(B, {pressAll:true}).chips[ch.id];
+     return {main:[powered, only("R","r"), only("Y","y"), only("G","g"), noBurn([base, s.R, s.Y, s.G])],
+             stretch: !!(powered && pressed && pressed.ins.BTN && !base.chips[ch.id].ins.BTN)};
+   }},
+  {key:"p-night", id:"night", type:"project", title:"Automatic night light",
+   blurb:"A light that turns itself on when the room gets dark.",
+   tools:["redwire","blackwire","resistor","led-yellow","led-red","led-green","sensor","button","move","remove"],
+   goal:`<p>Build a night light that turns on by itself when the room gets dark. Use the room brightness slider to test it.</p>`,
+   pins:`<b>Light sensor:</b> in this simulator, it works like a switch that closes when the room is dark. Put it in the LED’s loop, the same way the push button went in the loop in step 11.`,
+   checks:[
+     {label:"The LED lights up when the room is dark", hint:"Make a loop: + rail, the light sensor, a resistor, the LED, then the − rail."},
+     {label:"The LED turns off when the room is bright", hint:"If the LED stays on in the light, electricity is getting around the sensor. Make sure the sensor is the only way to reach the LED."},
+     {label:"No LEDs burn out", hint:BURN_HINT}],
+   stretch:{label:"A test button turns the light on even when the room is bright", hint:"Add a button side by side with the light sensor, with one leg in each of the sensor’s columns."},
+   test(B){
+     const sD = simulate(B, Object.assign(NO_PRESS(), {dark:true})), sL = simulate(B, Object.assign(NO_PRESS(), {dark:false}));
+     const night = ledsOf(B).filter(p=>sD.lit.has(p.id) && !sL.lit.has(p.id));
+     const sT = simulate(B, {dark:false, pressAll:true});
+     return {main:[sD.lit.size > 0, night.length > 0, noBurn([sD, sL])], stretch: night.some(p=>sT.lit.has(p.id))};
+   }},
+  {key:"p-quiz", id:"quiz", type:"project", title:"Game show buzzer", sound:"buzz",
+   blurb:"Two players race to buzz in first. Play it against a friend!",
+   tools:["redwire","blackwire","resistor","led-red","led-green","button","buzzer","chip-quiz","move","remove"],
+   goal:`<p>Build a game show buzzer for two players. Whoever presses their button first lights their LED and sounds the buzzer. Press <b>Reset round</b> to play again.</p>`,
+   pins:`<b>Quiz chip:</b> <b>+</b> (top left) to the + rail, <b>−</b> (top right) to the − rail. Wire each player’s button from the + rail to <b>IN1</b> or <b>IN2</b> (top row, middle). <b>OUT1</b> and <b>OUT2</b> light each player’s LED, and <b>BZ</b> runs the buzzer (bottom row, from the left). <b>RST</b> (bottom right) is for the stretch goal. The bottom rails are already wired to the battery.`,
+   checks:[
+     {label:"The quiz chip is powered", hint:PWR_HINT},
+     {label:"Player 1’s button connects the + rail to IN1", hint:"Put a button between the + rail and the IN1 pin column (top row, second from left)."},
+     {label:"Player 2’s button connects the + rail to IN2", hint:"Put a button between the + rail and the IN2 pin column (top row, third from left)."},
+     {label:"Player 1’s LED lights when player 1 wins", hint:"Wire OUT1 (bottom left) through a resistor to an LED, then to the − rail."},
+     {label:"Player 2’s LED lights when player 2 wins", hint:"Wire OUT2 (bottom row, second from left) through a resistor to a different LED."},
+     {label:"The buzzer sounds when someone wins", hint:"Wire the buzzer from BZ (bottom row, third from left) to the − rail, long leg toward the chip."},
+     {label:"No LEDs burn out", hint:BURN_HINT}],
+   stretch:{label:"A reset button wired to RST starts a new round", hint:"Put a button between the + rail and the RST pin column (bottom row, far right)."},
+   test(B){
+     const ch = firstChip(B, "quiz"), base = simulate(B, NO_PRESS());
+     const powered = !!(ch && base.chips[ch.id].powered);
+     const btns = B.parts.filter(p=>p.type === "button");
+     const insFor = b => powered ? simulate(B, {pressAll:false, pressIds:new Set([b.id])}).chips[ch.id].ins : {};
+     const ins = btns.map(insFor);
+     const s0 = powered ? chipSim(B, ch, {latched:0}) : base, s1 = powered ? chipSim(B, ch, {latched:1}) : base, s2 = powered ? chipSim(B, ch, {latched:2}) : base;
+     const ledOnly = (a, others) => powered && ledsOf(B).some(p=>a.lit.has(p.id) && others.every(o=>!o.lit.has(p.id)));
+     return {main:[powered, ins.some(i=>i.IN1 && !i.IN2), ins.some(i=>i.IN2 && !i.IN1), ledOnly(s1, [s0, s2]), ledOnly(s2, [s0, s1]),
+                   powered && s1.buzz.size > 0 && s2.buzz.size > 0 && s0.buzz.size === 0, noBurn([s0, s1, s2])],
+             stretch: ins.some(i=>i.RST)};
+   }}
+];
+/* ---------- easier project directions + finished-project previews ---------- */
+const W = (c, a, b) => ({type:"wire", color:c, a, b});
+const P2 = (type, a, b, color) => ({type, a, b, color});
+const PWR_STEP = "<b>Power the chip.</b> Add a <b>red wire</b> from the top + rail to the hole straight above the chip’s <b>+</b> pin. Add a <b>black wire</b> from the hole straight above the <b>−</b> pin to the top − rail. When the power is on, the chip’s little dot turns green.";
+const PJX = {
+  holiday:{chip:"blinker",
+    look:["The chip’s little dot glows green, so you know it has power.",
+          "Your LEDs flash on and off about twice a second.",
+          "Yellow dots flow from the chip, through the resistor and LEDs, to the − rail whenever the lights are on.",
+          "Holding the button makes the buzzer play Jingle Bells. Turn your sound on!"],
+    steps:["<b>Place the chip.</b> Choose <b>Blinker chip</b>, then tap a hole in <b>row e</b>, about halfway across the board. The chip sits across the valley. Its pins look like this: {PINMAP}",
+           PWR_STEP,
+           "<b>Add a resistor.</b> Put one end in the hole straight below output <b>A</b>. Put the other end about 4 columns to the right.",
+           "<b>Add 3 LEDs.</b> Put each LED’s <b>long leg</b> in the column where the resistor ended. Put all 3 <b>short legs</b> in the next column to the right.",
+           "<b>Close the loop.</b> Add a <b>black wire</b> from the short legs’ column to the <b>bottom − rail</b>.",
+           "<b>Build the jingle button</b> on the left side of the board, in the top half. Use a red wire from the top + rail, then a <b>button</b>, then the <b>buzzer</b> (long leg toward the button), then a black wire back to the top − rail. Start each part in the column where the last one ended.",
+           "<b>Turn on the power</b>, watch the lights, and hold the button. Then press <b>Test my project</b>."],
+    example:[{type:"chip", kind:"blinker", col:14}, W("red","tp14","a14"), W("black","a17","tn17"),
+             P2("resistor","i14","i18"), P2("led","f18","f19","r"), P2("led","g18","g19","g"), P2("led","h18","h19","y"), W("black","j19","bn19"),
+             W("red","tp5","a5"), P2("button","c5","c8"), P2("buzzer","b8","b10"), W("black","a10","tn10")]},
+  traffic:{chip:"sequencer",
+    look:["Only one light is on at a time.",
+          "The pattern repeats: red for 3 seconds, then green for 3 seconds, then yellow for about 1 second.",
+          "The chip’s dot glows green, and yellow dots flow to whichever light is on."],
+    steps:["<b>Place the chip.</b> Choose <b>Sequencer chip</b>, then tap a hole in <b>row e</b>, about halfway across the board. Its pins look like this: {PINMAP}",
+           PWR_STEP,
+           "<b>Red light.</b> Add a resistor from the hole straight below <b>R</b> to about 5 columns to the right. Put a <b>red LED</b>’s long leg in that column and its short leg one column to the right. Then add a <b>black wire</b> from the short leg’s column to the bottom − rail.",
+           "<b>Yellow light.</b> Do the same thing starting below <b>Y</b>, with a <b>yellow LED</b>. Use a different row and end farther right, so it doesn’t share any columns with the red light.",
+           "<b>Green light.</b> Same again starting below <b>G</b>, with a <b>green LED</b>, even farther right.",
+           "<b>Turn on the power</b> and watch the lights change. Then press <b>Test my project</b>."],
+    example:[{type:"chip", kind:"sequencer", col:14}, W("red","tp14","a14"), W("black","a17","tn17"),
+             P2("resistor","g14","g19"), P2("led","h19","h20","r"), W("black","j20","bn20"),
+             P2("resistor","i15","i22"), P2("led","h22","h23","y"), W("black","j23","bn23"),
+             P2("resistor","j16","j25"), P2("led","h25","h26","g"), W("black","j26","bn26")]},
+  night:{
+    look:["When the room is bright, the LED is off.",
+          "Slide the room to Dark: the whole board gets darker and the LED turns on by itself.",
+          "Slide it back to Bright and the LED turns off again."],
+    steps:["<b>Bring in power.</b> Add a <b>red wire</b> from the top + rail to a hole in the top half, like <b>a6</b>.",
+           "<b>Add the light sensor.</b> Put one leg in the red wire’s column and the other leg 3 columns to the right. In this simulator, the sensor works like a switch that closes when the room is dark.",
+           "<b>Add a resistor</b> from the sensor’s second column to about 5 columns to the right.",
+           "<b>Add an LED.</b> Put its long leg in the resistor’s column and its short leg 2 columns to the right.",
+           "<b>Close the loop.</b> Add a <b>black wire</b> from the short leg’s column to the top − rail.",
+           "<b>Turn on the power</b>, then slide <b>Room brightness</b> to Dark. Then press <b>Test my project</b>."],
+    example:[W("red","tp6","a6"), P2("sensor","c6","c9"), P2("resistor","b9","b14"), P2("led","c14","c16","y"), W("black","a16","tn16")]},
+  quiz:{chip:"quiz",
+    look:["Before anyone presses, both LEDs are off.",
+          "The first player to press lights their own LED, and the buzzer buzzes.",
+          "The other player’s button does nothing until you press Reset round."],
+    steps:["<b>Place the chip.</b> Choose <b>Quiz chip</b>, then tap a hole in <b>row e</b>, about halfway across the board. Its pins look like this: {PINMAP}",
+           PWR_STEP,
+           "<b>Player 1’s button.</b> Add a <b>red wire</b> from the top + rail to a hole a few columns left of the chip. Then add a <b>button</b> from that column to the hole straight above <b>IN1</b>.",
+           "<b>Player 2’s button.</b> Same idea on the right side of the chip, ending straight above <b>IN2</b>.",
+           "<b>Player 1’s light.</b> Add a resistor from the hole straight below <b>OUT1</b> to about 5 columns right. Add an LED with its long leg in that column and its short leg one column right. Then add a black wire to the bottom − rail.",
+           "<b>Player 2’s light.</b> Same thing starting below <b>OUT2</b>, with a different color LED, farther right.",
+           "<b>Add the buzzer.</b> Long leg in the hole straight below <b>BZ</b>, short leg in the bottom − rail.",
+           "<b>Turn on the power</b> and race a friend! Press <b>Reset round</b> between rounds, then press <b>Test my project</b>."],
+    example:[{type:"chip", kind:"quiz", col:14}, W("red","tp14","a14"), W("black","a17","tn17"),
+             W("red","tp10","a10"), P2("button","b10","b15"), W("red","tp21","a21"), P2("button","b21","b16"),
+             P2("resistor","g14","g19"), P2("led","h19","h20","r"), W("black","j20","bn20"),
+             P2("resistor","i15","i22"), P2("led","h22","h23","g"), W("black","j23","bn23"),
+             P2("buzzer","g16","bn16")]}
+};
+function pinMap(kind){
+  const pins = CHIP_KINDS[kind].pins, lab = n => pins[n] || "";
+  const cell = n => `<span class="pm-pin${pins[n] ? "" : " pm-empty"}">${pins[n] || "·"}</span>`;
+  const desc = row => row.map(n=>lab(n) || "empty").join(", ");
+  return `<span class="pinmap-wrap"><span class="pinmap" role="img" aria-label="Chip pins. Top row, left to right: ${desc([8,7,6,5])}. Bottom row, left to right: ${desc([1,2,3,4])}.">
+    <span class="pm-notch"></span><span class="pm-row">${[8,7,6,5].map(cell).join("")}</span><span class="pm-body">notch on the left</span><span class="pm-row">${[1,2,3,4].map(cell).join("")}</span></span>
+    <span class="pm-cap">The top row sits in row e and the bottom row in row f.</span></span>`;
+}
+function lookHtml(s){ return `<h3>When you’re done, you’ll see</h3><ul class="look">${PJX[s.id].look.map(l=>`<li>${l}</li>`).join("")}</ul>`; }
+function stepsHtml(s){ const x = PJX[s.id]; return `<ol class="steps">${x.steps.map(t=>`<li>${x.chip ? t.replace("{PINMAP}", pinMap(x.chip)) : t}</li>`).join("")}</ol>`; }
+function exampleBench(s){
+  const spec = [W("red","tp1","bp1"), W("black","tn1","bn1")].concat(PJX[s.id].example.map(p=>p.type === "chip" ? Object.assign({}, p, {pins:chipPins(p.col)}) : p));
+  const B = newBench(spec);
+  B.parts.filter(p=>p.type === "chip").forEach(p=>{ B.chips[p.id] = newChipState(p.kind); if (p.kind === "quiz") B.chips[p.id].latched = 1; });
+  B.power = true;
+  if (s.id === "night"){ B.light = 10; B.dark = true; }
+  return B;
+}
+
+const PICKER = {key:"picker", type:"picker", title:"Projects"};
+function cs(){ return view === "projects" ? (curProj === null ? PICKER : PROJECTS[curProj]) : steps[cur]; }
+function projectBench(){ return newBench([{type:"wire", color:"red", a:"tp1", b:"bp1"}, {type:"wire", color:"black", a:"tn1", b:"bn1"}]); }
+
+/* ---------- chip timing ---------- */
+function advanceChips(B, dt){
+  if (!B.parts.some(p=>p.type === "chip")) return;
+  const sim = simulate(B);
+  B.parts.filter(p=>p.type === "chip").forEach(p=>{
+    const s = B.chips[p.id] || (B.chips[p.id] = newChipState(p.kind)), info = sim.chips[p.id];
+    if (!info || !info.powered) return;
+    s.t = (s.t || 0) + dt;
+    if (p.kind === "blinker"){ if (s.t >= 500){ s.t = 0; s.phase = 1 - s.phase; } }
+    else if (p.kind === "sequencer"){
+      const dur = {R:3000, G:3000, Y:1200}[s.light];
+      if (s.light === "G" && info.ins.BTN && s.t < dur - 500) s.t = dur - 500;
+      if (s.t >= dur){ s.t = 0; s.light = {R:"G", G:"Y", Y:"R"}[s.light]; }
+    } else {
+      if (info.ins.RST) s.latched = 0;
+      else if (!s.latched){ if (info.ins.IN1) s.latched = 1; else if (info.ins.IN2) s.latched = 2; }
+    }
+  });
+}
+
+/* ---------- sounds (Jingle Bells is a public-domain tune) ---------- */
+function tone(freq, dur, type, vol){
+  if (muted) return;
+  try{
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+    const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime;
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur + 0.02);
+  }catch(_){}
+}
+const JINGLE = [["E",1],["E",1],["E",2],["E",1],["E",1],["E",2],["E",1],["G",1],["C",1.5],["D",.5],["E",4],
+                ["F",1],["F",1],["F",1.5],["F",.5],["F",1],["E",1],["E",1],["E",.5],["E",.5],["E",1],["D",1],["D",1],["E",1],["D",2],["G",2]];
+const NOTE_HZ = {C:523.25, D:587.33, E:659.25, F:698.46, G:783.99};
+let jingleOn = false, jingleTimer = null, jingleIdx = 0, buzzPrev = false;
+function playNext(){
+  if (!jingleOn) return;
+  const [n, beats] = JINGLE[jingleIdx], dur = beats * 0.22;
+  tone(NOTE_HZ[n], dur * 0.85, "square", 0.045);
+  jingleIdx = (jingleIdx + 1) % JINGLE.length;
+  jingleTimer = setTimeout(playNext, dur * 1000 + (jingleIdx === 0 ? 500 : 0));
+}
+function startJingle(){ if (jingleOn) return; jingleOn = true; jingleIdx = 0; playNext(); }
+function stopJingle(){ jingleOn = false; clearTimeout(jingleTimer); buzzPrev = false; }
+function soundUpdate(B, sim, pj){
+  const on = !!(B && B.power && sim && !sim.short && sim.buzz.size);
+  if (pj && pj.sound === "jingle"){ if (on) startJingle(); else stopJingle(); }
+  else { if (jingleOn) stopJingle(); if (on && !buzzPrev) tone(140, 0.6, "sawtooth", 0.06); }
+  buzzPrev = on;
+}
+
+/* ---------- room light for the night light ---------- */
+function applyRoom(pj, B){ dimmer.setAttribute("opacity", pj && pj.id === "night" && B ? ((100 - B.light) / 100 * 0.6).toFixed(2) : "0"); }
+const roomWord = B => B.light < 40 ? "Dark" : B.light < 70 ? "Dim" : "Bright";
+
+function projStatus(B, sim, pj){
+  if (!B.power) return ["msg", "Power is off. Turn it on to try your project."];
+  if (sim.short) return benchStatus(B, sim);
+  const chips = Object.values(sim.chips), extra = [];
+  if (chips.some(c=>!c.powered)) extra.push("The chip isn’t powered yet. Connect its + pin to the + rail and its − pin to the − rail.");
+  if (sim.buzz.size) extra.push(pj.sound === "jingle" ? "The buzzer is playing the jingle!" : "Bzzzt! The buzzer is sounding.");
+  let [c, m] = benchStatus(B, sim);
+  if (/^No (complete loop|light yet)/.test(m)){
+    if (chips.some(x=>x.powered)) m = "The chip is running.";
+    else if (sim.buzz.size) m = "";
+    else if (B.parts.some(p=>p.type === "sensor") && !B.dark) m = "The room is bright, so the light sensor keeps the loop open. Slide the room brightness down to make it dark.";
+  }
+  return [c, [m].concat(extra).filter(Boolean).join(" ")];
+}
+
+M.picker = {
+  render(box){
+    box.innerHTML = `<div class="proj-grid">${PROJECTS.map((pj,i)=>{
+      const S = MS[pj.key];
+      const status = S && S.done ? (S.stretchDone ? "Complete, plus the stretch goal ★★" : "Complete ★") : (S ? "In progress" : "Not started");
+      return `<button type="button" class="proj-card${S && S.done ? " done" : ""}" data-proj="${i}"><strong>${pj.title}</strong><span>${pj.blurb}</span><span class="proj-status">${status}</span></button>`;
+    }).join("")}</div>`;
+    box.querySelectorAll("[data-proj]").forEach(b=>b.onclick = ()=>{ curProj = +b.dataset.proj; const S0 = MS[PROJECTS[curProj].key]; if (S0){ S0.preview = false; S0.ex = null; } renderProjects(true); });
+  }
+};
+
+M.project = {
+  init:()=>({bench:projectBench(), results:null, done:false, stretchDone:false, rmsg:"", rcls:"msg"}),
+  render(box,s,S){
+    if (S.preview){
+      const E = S.ex;
+      drawBench(E); applyRoom(s, E); stopJingle();
+      pressHandler = null;
+      box.innerHTML = `<div class="mission"><p class="mission-h">Preview: a finished ${s.title.toLowerCase()}</p>
+        <p>This is one way the finished project can look, and it’s running, so watch what it does. Your build can use different holes and still work.</p>
+        ${s.id === "holiday" ? `<p class="note">In your own build, holding the button also plays Jingle Bells.</p>` : ""}
+        ${s.id === "quiz" ? `<p class="note">In this preview, player 1 has buzzed in first.</p>` : ""}
+        ${s.id === "night" ? `<p class="note">In this preview, the room is set to Dark.</p>` : ""}
+        <div class="row"><button type="button" class="primary" id="pjExit">Back to my build</button></div></div>
+        ${lookHtml(s)}`;
+      document.getElementById("pjExit").onclick = ()=>{ S.preview = false; S.ex = null; refresh(); const pv = document.getElementById("pjPreview"); if (pv) pv.focus(); readout.innerHTML = "Back to your build."; };
+      return;
+    }
+    const B = S.bench, sim = drawBench(B);
+    applyRoom(s, B);
+    soundUpdate(B, sim, s);
+    const hasBtn = B.parts.some(p=>p.type === "button"), R = S.results;
+    const [pc, pm] = projStatus(B, sim, s);
+    const items = s.checks.map((c,i)=>[R ? R.main[i] : false, c.label + (R && !R.main[i] ? `<span class="why">Hint: ${c.hint}</span>` : "")]);
+    box.innerHTML = `<div class="row"><button type="button" id="pjBack">← All projects</button></div>
+      <div class="mission${S.done ? " done" : ""}"><p class="mission-h">${S.done ? "Project complete!" : "Goal"}</p>${s.goal}
+        <div class="row"><button type="button" id="pjPreview">See the finished project</button></div></div>
+      ${lookHtml(s)}
+      <h3>Steps</h3>${stepsHtml(s)}
+      <h3>Parts</h3>${toolsRow(B, s.tools)}${testerNote()}
+      <div class="row">
+        <button type="button" class="primary" id="pjPower" aria-pressed="${B.power}">${B.power ? "Turn power off" : "Turn power on"}</button>
+        ${hasBtn ? `<button type="button" id="pjHold" class="holdbtn">Press and hold all buttons</button>` : ""}
+        ${s.id === "quiz" ? `<button type="button" id="pjReset">Reset round</button>` : ""}
+        <button type="button" id="pjUndo" ${B.parts.length ? "" : "disabled"}>Undo</button>
+        <button type="button" id="pjClear">Clear board</button>
+      </div>
+      ${s.id === "night" ? `<div class="room"><label for="roomLight">Room brightness: <b id="roomLbl">${roomWord(B)}</b></label><input type="range" id="roomLight" min="0" max="100" step="5" value="${B.light}"></div>` : ""}
+      <p id="pjStatus" class="${pc}" aria-live="polite">${pm}</p>
+      <h3>Your project should</h3>${checklist(items)}
+      <div class="row"><button type="button" class="primary" id="pjTest">Test my project</button></div>
+      <p class="${S.rcls}" aria-live="polite">${S.rmsg}</p>
+      <h3>Stretch goal</h3>${checklist([[R ? R.stretch : false, s.stretch.label + (R && !R.stretch ? `<span class="why">Hint: ${s.stretch.hint}</span>` : "")]])}`;
+    wireTools(box, B);
+    const changed = ()=>{ S.results = null; S.rmsg = ""; S.rcls = "msg"; };
+    document.getElementById("pjBack").onclick = ()=>{ curProj = null; renderProjects(true); };
+    document.getElementById("pjPreview").onclick = ()=>{ S.preview = true; S.ex = exampleBench(s); B.pending = null; stopJingle(); refresh(); const ex = document.getElementById("pjExit"); if (ex) ex.focus(); readout.innerHTML = "Showing a finished example. Press <b>Back to my build</b> when you’re ready."; };
+    document.getElementById("pjPower").onclick = ()=>{ B.power = !B.power; if (!B.power) stopJingle(); refresh(); document.getElementById("pjPower").focus(); };
+    document.getElementById("pjUndo").onclick = ()=>{ const g = B.parts.pop(); if (g && g.type === "chip") delete B.chips[g.id]; B.pending = null; changed(); refresh(); readout.innerHTML = "Last part removed."; };
+    document.getElementById("pjClear").onclick = ()=>{ const keep = {power:B.power, light:B.light, dark:B.dark, tool:B.tool}; S.bench = Object.assign(projectBench(), keep); changed(); refresh(); readout.innerHTML = "Board cleared. The battery and rail wires are still in place."; };
+    const rs = document.getElementById("pjReset");
+    if (rs) rs.onclick = ()=>{ Object.values(B.chips).forEach(c=>{ if ("latched" in c) c.latched = 0; }); buzzPrev = false; refresh(); readout.innerHTML = "New round! First player to press wins."; };
+    const sl = document.getElementById("roomLight");
+    if (sl) sl.oninput = ()=>{
+      B.light = +sl.value; B.dark = B.light < 40;
+      document.getElementById("roomLbl").textContent = roomWord(B);
+      applyRoom(s, B);
+      const sm = drawBench(B); soundUpdate(B, sm, s);
+      const p = document.getElementById("pjStatus"); const [c, m] = projStatus(B, sm, s); p.className = c; p.textContent = m;
+    };
+    const onPress = (v, pid)=>{
+      if (pid){ if (v) B.down.add(pid); else B.down.delete(pid); } else B.pressed = v;
+      advanceChips(B, 0);
+      const sm = drawBench(B); soundUpdate(B, sm, s);
+      if (v){ const p = document.getElementById("pjStatus"); if (p){ const [c, m] = projStatus(B, sm, s); p.className = c; p.textContent = m; } }
+      else refresh();
+    };
+    pressHandler = hasBtn ? onPress : null;
+    const hb = document.getElementById("pjHold");
+    if (hb) makeHold(hb, v=>{ onPress(v); if (!v){ const h = document.getElementById("pjHold"); if (h) h.focus(); } });
+    document.getElementById("pjTest").onclick = ()=>{
+      const r = s.test(B); S.results = r;
+      const all = r.main.every(Boolean);
+      if (all) S.done = true;
+      if (all && r.stretch) S.stretchDone = true;
+      if (simulate(B, NO_PRESS()).short){ S.rcls = "msg bad"; S.rmsg = "There’s a short circuit: a wire connects + straight to −. Fix that first."; }
+      else if (all && r.stretch){ S.rcls = "msg good"; S.rmsg = "Amazing! Your project works and you finished the stretch goal."; }
+      else if (all){ S.rcls = "msg good"; S.rmsg = "Your project works! Try the stretch goal next."; }
+      else { S.rcls = "msg bad"; S.rmsg = "Not quite yet. Check the hints under the unchecked items."; }
+      refresh();
+      const t = document.getElementById("pjTest"); if (t) t.focus();
+    };
+  },
+  tap(id,s,S){ if (S.preview){ readout.innerHTML = "This is just a preview. Press <b>Back to my build</b> to keep building."; return; } if (benchTap(S.bench, id)){ S.results = null; S.rmsg = ""; S.rcls = "msg"; } refresh(); }
+};
+
+function renderProjects(focusTitle){
+  const s = cs();
+  document.getElementById("count").textContent = curProj === null ? "Projects" : `Project ${curProj+1} of ${PROJECTS.length}`;
+  document.getElementById("stepTitle").textContent = s.title;
+  document.getElementById("notesBody").innerHTML = NOTES[s.title] || "";
+  document.getElementById("stepBody").innerHTML = curProj === null
+    ? `<p>Time to put your skills to work. Pick a project, build it your own way, then press <b>Test my project</b> to check it.</p><p class="note">Each project has a stretch goal for when you finish.</p>` : "";
+  document.getElementById("interactive").innerHTML = "";
+  stopReading();
+  clearMarks(); clearProbes(); clearRings();
+  pressHandler = null;
+  while (gBtnHits.firstChild) gBtnHits.removeChild(gBtnHits.firstChild);
+  gChip.style.display = "none"; pinsShown = false; gPinLbl.style.display = "none";
+  drawParts(false); setTester(false);
+  const B = benchOf(s);
+  gSandbox.style.display = B ? "" : "none";
+  if (B) B.pending = null; else { stopJingle(); applyRoom(null); }
+  readout.innerHTML = B ? "Pick a part, then tap holes on the board to place it." : "Pick a project to start.";
+  refresh();
+  if (focusTitle) document.getElementById("stepTitle").focus({preventScroll:true});
+}
+
+/* ---------- tutorial / projects switch ---------- */
+const tutBtn = document.getElementById("tutBtn"), projBtn = document.getElementById("projBtn");
+function tutorialDone(){ return steps.filter(x=>x.gated).every(x=>done.has(x.key)); }
+function projectsUnlocked(){
+  if (teacher || tutorialDone()) return true;
+  try{ return !!(studentName && localStorage.getItem("bb-tutorial-done:" + studentName.toLowerCase())); }catch(_){ return false; }
+}
+function updateViewBtns(){
+  const un = projectsUnlocked();
+  if (view === "projects" && !un){ view = "tutorial"; curProj = null; stopJingle(); render(); return; }
+  tutBtn.setAttribute("aria-pressed", view === "tutorial" ? "true" : "false");
+  projBtn.setAttribute("aria-pressed", view === "projects" ? "true" : "false");
+  projBtn.disabled = !un;
+  projBtn.textContent = un ? "Projects" : "Projects (locked)";
+  projBtn.title = un ? "" : "Finish the tutorial to unlock the projects";
+}
+tutBtn.onclick = ()=>{ if (view === "tutorial") return; view = "tutorial"; curProj = null; stopJingle(); render(true); };
+projBtn.onclick = ()=>{ if (!projectsUnlocked()) return; view = "projects"; curProj = null; renderProjects(true); };
+setInterval(()=>{
+  if (view !== "projects" || curProj === null) return;
+  const s = cs(), S = st(s), B = S.preview ? S.ex : S.bench;
+  if (!B || !B.power || !B.parts.some(p=>p.type === "chip")) return;
+  advanceChips(B, 250);
+  const sim = drawBench(B);
+  if (!S.preview) soundUpdate(B, sim, s);
+  const p = document.getElementById("pjStatus");
+  if (p){ const [c, m] = projStatus(B, sim, s); p.className = c; p.textContent = m; }
+}, 250);
+
+/* ---------- sound on/off ---------- */
+const soundBtn = document.getElementById("soundBtn");
+function setMuted(m, persist){
+  muted = m;
+  if (m) stopJingle();
+  soundBtn.setAttribute("aria-pressed", m ? "false" : "true");
+  soundBtn.textContent = m ? "Sound: off" : "Sound: on";
+  if (persist !== false){ try{ localStorage.setItem("bb-muted", m ? "1" : "0"); }catch(_){} }
+}
+soundBtn.onclick = ()=>setMuted(!muted);
+
+/* ---------- current flow on/off ---------- */
+const flowBtn = document.getElementById("flowBtn");
+function setFlow(on, persist){
+  showFlow = on;
+  document.body.classList.toggle("noflow", !on);
+  flowBtn.setAttribute("aria-pressed", on ? "true" : "false");
+  flowBtn.textContent = on ? "Current: on" : "Current: off";
+  if (persist !== false){ try{ localStorage.setItem("bb-flow", on ? "1" : "0"); }catch(_){} }
+}
+function updateFlowBtn(){ const c = cs(); flowBtn.hidden = !(benchOf(c) || c.type === "resistor" || c.final); }
+flowBtn.onclick = ()=>{ setFlow(!showFlow); refresh(); flowBtn.focus(); };
+try{ setFlow(localStorage.getItem("bb-flow") !== "0", false); }catch(_){ setFlow(true, false); }
+try{ setMuted(localStorage.getItem("bb-muted") === "1", false); }catch(_){ setMuted(false, false); }
+
+/* ---------- zoom ---------- */
+const zoomBtn = document.getElementById("zoomBtn"), boardWrap = document.querySelector(".board-wrap");
+zoomBtn.onclick = ()=>{
+  const z = boardWrap.classList.toggle("zoom");
+  zoomBtn.setAttribute("aria-pressed", z ? "true" : "false");
+  zoomBtn.textContent = z ? "Zoom out" : "Zoom in";
+};
+
+/* ---------- read aloud ---------- */
+const readBtn = document.getElementById("readBtn"), synth = window.speechSynthesis;
+let reading = false;
+if (!synth || typeof SpeechSynthesisUtterance === "undefined") readBtn.hidden = true;
+function stopReading(){
+  if (synth && reading){ try{ synth.cancel(); }catch(_){} }
+  reading = false;
+  readBtn.setAttribute("aria-pressed", "false"); readBtn.textContent = "Read aloud";
+}
+readBtn.onclick = ()=>{
+  if (reading){ stopReading(); return; }
+  const bits = [document.getElementById("stepTitle").textContent];
+  document.querySelectorAll("#stepBody p, #stepBody li, #interactive .mission > p, #interactive .mission .try, #interactive .mission li, #interactive .pair").forEach(n=>bits.push(n.textContent));
+  const u = new SpeechSynthesisUtterance(bits.map(t=>t.trim()).filter(Boolean).join(". ").replace(/\s+/g, " "));
+  u.rate = 0.95;
+  u.onend = u.onerror = ()=>{ reading = false; readBtn.setAttribute("aria-pressed", "false"); readBtn.textContent = "Read aloud"; };
+  reading = true; readBtn.setAttribute("aria-pressed", "true"); readBtn.textContent = "Stop reading";
+  try{ synth.cancel(); synth.speak(u); }catch(_){ stopReading(); }
+};
+
+/* ---------- schematic view ---------- */
+const schemBtn = document.getElementById("schemBtn"), schemWrap = document.getElementById("schemWrap"), schemSvg = document.getElementById("schem");
+let schemOn = false;
+schemBtn.onclick = ()=>{ schemOn = !schemOn; drawSchem(); };
+function schemInfo(){
+  if (view === "projects") return null;
+  const s = cs();
+  if (s.type === "guided"){
+    const S = st(s), B = S.bench, sim = B.power ? simulate(B) : null;
+    return {kind:s.finish === "press" ? "btn" : "led", placed:S.i, lit:!!(sim && sim.lit.size), closed:B.pressed || B.down.size > 0, rLabel:"Resistor"};
+  }
+  if (s.type === "resistor"){
+    const r = RES[resChoice];
+    return {kind:"led", placed:4, lit:r.mood !== "burnt" && r.mood !== "faint", closed:false, noRes:resChoice === "none", burnt:r.mood === "burnt",
+            rLabel:resChoice === "none" ? "No resistor" : "Resistor, " + r.label};
+  }
+  return null;
+}
+function drawSchem(){
+  const info = schemInfo();
+  schemBtn.hidden = !info;
+  const show = !!info && schemOn;
+  schemWrap.hidden = !show;
+  schemBtn.setAttribute("aria-pressed", show ? "true" : "false");
+  schemBtn.textContent = show ? "Hide schematic" : "Show schematic";
+  if (!show) return;
+  while (schemSvg.firstChild) schemSvg.removeChild(schemSvg.firstChild);
+  const T = 45, Bt = 150, L = 70, Rt = 450;
+  const cls = i => "sc-wire" + (i < info.placed ? "" : " sc-off");
+  const P = (d, c) => el("path", {class:c, d}, schemSvg);
+  const txt = (tx, ty, t, anchor)=>{ const e = el("text", {class:"sc-text", x:tx, y:ty, "text-anchor":anchor || "middle"}, schemSvg); e.textContent = t; };
+  const zig = zx => `M${zx} ${T} l7 -8 l13 16 l13 -16 l13 16 l13 -16 l13 16 l7 -8`;
+  const ledSym = (lx, i)=>{
+    el("path", {class:"sc-led" + (i < info.placed ? "" : " sc-off") + (info.lit ? " on" : "") + (info.burnt ? " burnt" : ""), d:`M${lx} ${T-10} L${lx} ${T+10} L${lx+18} ${T} Z`}, schemSvg);
+    P(`M${lx+18} ${T-10} L${lx+18} ${T+10}`, cls(i));
+    P(`M${lx+6} ${T-15} l7 -7 m-5 0 l5 0 l0 5 M${lx+16} ${T-15} l7 -7 m-5 0 l5 0 l0 5`, "sc-wire sc-thin" + (i < info.placed ? "" : " sc-off"));
+  };
+  const switchSym = (x1, x2, i)=>{
+    const c = cls(i);
+    el("circle", {class:c, cx:x1, cy:T, r:3}, schemSvg); el("circle", {class:c, cx:x2, cy:T, r:3}, schemSvg);
+    P(info.closed ? `M${x1} ${T} L${x2} ${T}` : `M${x1} ${T} L${x2-6} ${T-16}`, c);
+  };
+  el("line", {class:"sc-wire", x1:L-16, y1:88, x2:L+16, y2:88}, schemSvg);
+  el("line", {class:"sc-wire sc-thick", x1:L-8, y1:104, x2:L+8, y2:104}, schemSvg);
+  txt(L+27, 86, "+"); txt(L+27, 111, "−"); txt(L-22, 100, "Battery", "end");
+  if (info.kind === "led"){
+    P(`M${L} 88 L${L} ${T} L150 ${T}`, cls(0));
+    P((info.noRes ? `M150 ${T}` : zig(150)) + ` L300 ${T}`, cls(1)); txt(190, T+32, info.rLabel);
+    ledSym(300, 2); P(`M318 ${T} L350 ${T}`, cls(2)); txt(309, T+32, "LED");
+    P(`M350 ${T} L${Rt} ${T} L${Rt} ${Bt} L${L} ${Bt} L${L} 104`, cls(3));
+  } else {
+    P(`M${L} 88 L${L} ${T} L120 ${T}`, cls(0));
+    switchSym(120, 170, 1); P(`M170 ${T} L200 ${T}`, cls(1)); txt(145, T+32, "Push button");
+    P(zig(200) + ` L330 ${T}`, cls(2)); txt(240, T+32, "Resistor");
+    ledSym(330, 3); P(`M348 ${T} L380 ${T}`, cls(3)); txt(339, T+32, "LED");
+    P(`M380 ${T} L${Rt} ${T} L${Rt} ${Bt} L${L} ${Bt} L${L} 104`, cls(4));
+  }
+  if (info.lit){ const d = `M${L} 88 L${L} ${T} L${Rt} ${T} L${Rt} ${Bt} L${L} ${Bt} L${L} 104`; P(d, "flow-track"); P(d, "flow"); }
+}
+
+/* ---------- build it for real + printing ---------- */
+const printArea = document.getElementById("printArea");
+function partLine(p){
+  if (p.type === "wire") return `${p.color === COLORS.black ? "Black" : "Red"} wire: ${nice(p.a)} to ${nice(p.b)}`;
+  if (p.type === "resistor") return `Resistor (220 Ω): ${nice(p.a)} to ${nice(p.b)}`;
+  if (p.type === "led") return `${({r:"Red", g:"Green", y:"Yellow"})[p.color || "r"]} LED: long leg (+) in ${nice(p.a)}, short leg in ${nice(p.b)}`;
+  if (p.type === "button") return `Push button: ${nice(p.a)} to ${nice(p.b)}`;
+  return `${PART_NAMES[p.type]}: ${nice(p.a)} to ${nice(p.b)}`;
+}
+function realCard(title, B){
+  if (!B.parts.length || B.parts.some(p=>["chip","sensor","buzzer"].includes(p.type))) return "";
+  return `<details class="real-card"><summary>Build it for real</summary>
+    <p>Have a real breadboard? Copy your circuit onto it, one part at a time. Plug the battery’s red wire into the top + rail and its black wire into the top − rail.</p>
+    <ul class="card-list">${B.parts.map(p=>`<li>${partLine(p)}</li>`).join("")}</ul>
+    <div class="row"><button type="button" data-print="card" data-title="${esc(title)}">Print this card</button></div></details>`;
+}
+function doPrint(html){
+  printArea.innerHTML = html;
+  document.body.classList.add("print-only");
+  try{ window.print(); }catch(_){}
+  readout.innerHTML = "If a print window didn’t open, use your browser’s Print command now.";
+}
+window.addEventListener("afterprint", ()=>document.body.classList.remove("print-only"));
+document.addEventListener("click", e=>{
+  const t = e.target.closest ? e.target.closest("[data-print]") : null;
+  if (!t) return;
+  const today = new Date().toLocaleDateString(undefined, {year:"numeric", month:"long", day:"numeric"});
+  const who = studentName ? esc(studentName) : "______________________";
+  if (t.dataset.print === "card"){
+    const B = benchOf(cs()); if (!B) return;
+    doPrint(`<h1>Build it for real: ${t.dataset.title}</h1><p>Name: ${who} &nbsp;&nbsp; Date: ${today}</p>
+      <p>You need: a breadboard, a 3 V battery pack, jumper wires, and the parts below. Check off each part as you place it.</p>
+      <ol class="pr-list"><li>Battery: red wire to the top + rail, black wire to the top − rail</li>${B.parts.map(p=>`<li>${partLine(p)}</li>`).join("")}</ol>`);
+  } else if (t.dataset.print === "cert"){
+    const stars = MS.free ? MS.free.stars.size : 0;
+    doPrint(`<div class="cert"><p class="cert-small">Breadboard Basics</p><h1>Breadboard Certified</h1><p>This certifies that</p><p class="cert-who">${who}</p>
+      <p>completed all 12 missions and can read, test, and build circuits on a solderless breadboard.</p>
+      <p class="cert-small">${today}${stars ? ` &nbsp;·&nbsp; Free build stars: ${stars} of ${FREE.length}` : ""}</p></div>`);
+  }
+});
+
+/* ---------- saved progress (on this computer, by first name) ---------- */
+const SAVE_V = 2;
+const saveKey = n => "bb-save:" + n.toLowerCase();
+const ser = v => JSON.stringify(v, (k, val)=> val instanceof Set ? {__set:[...val]} : val);
+const deser = t => JSON.parse(t, (k, val)=> val && typeof val === "object" && Array.isArray(val.__set) ? new Set(val.__set) : val);
+let saveTimer = null;
+function saveNow(){
+  if (!studentName || teacher) return;
+  try{ localStorage.setItem(saveKey(studentName), ser({v:SAVE_V, cur, done:[...done], ms:MS, nid})); }catch(_){}
+}
+function scheduleSave(){ if (!studentName || teacher) return; clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 400); }
+function loadSave(name){
+  try{
+    const t = localStorage.getItem(saveKey(name)); if (!t) return null;
+    const d = deser(t);
+    return d && d.v === SAVE_V && Array.isArray(d.done) && (d.done.length || Object.keys(d.ms || {}).length > 1) ? d : null;
+  }catch(_){ return null; }
+}
+function applySave(d){
+  d.done.forEach(k=>done.add(k));
+  MS = d.ms || {};
+  cur = Math.max(0, Math.min(d.cur || 0, steps.length - 1));
+  nid = Math.max(nid, d.nid || 1);
+  Object.keys(MS).forEach(k=>{
+    const B = MS[k] && MS[k].bench; if (!B) return;
+    B.pending = null; B.moving = null; B.pressed = false; B.down = new Set();
+    if (MS[k].preview){ MS[k].preview = false; MS[k].ex = null; }
+    if (!B.chips) B.chips = {};
+    if (k.indexOf("p-") === 0) B.power = false;
+  });
+}
+window.addEventListener("pagehide", saveNow);
+
+/* ---------- navigation ---------- */
+const progress = document.getElementById("progress");
+const prevBtn = document.getElementById("prevBtn"), nextBtn = document.getElementById("nextBtn"), lockNote = document.getElementById("lockNote");
+steps.forEach((s,i)=>{
+  const b = document.createElement("button");
+  b.type = "button"; b.textContent = i+1;
+  b.onclick = ()=>{ cur = i; render(true); };
+  progress.appendChild(b);
+});
+function maxUnlocked(){
+  const i = steps.findIndex(s=>s.gated && !done.has(s.key));
+  return i < 0 ? steps.length - 1 : i;
+}
+function updateNav(){
+  const pv = view === "projects";
+  progress.hidden = pv; document.querySelector(".nav").hidden = pv;
+  updateViewBtns();
+  if (pv){ lockNote.hidden = true; return; }
+  const s = cs(), locked = !teacher && s.gated && !done.has(s.key);
+  prevBtn.disabled = cur === 0;
+  nextBtn.textContent = cur === steps.length - 1 ? "Start over" : "Next";
+  nextBtn.disabled = locked && cur < steps.length - 1;
+  lockNote.hidden = !locked;
+  const mu = maxUnlocked();
+  [...progress.children].forEach((b,i)=>{
+    const lockedDot = !teacher && i > mu;
+    b.disabled = lockedDot;
+    b.classList.toggle("done", !!steps[i].gated && done.has(steps[i].key));
+    b.setAttribute("aria-label", `Step ${i+1}: ${steps[i].title}${lockedDot ? " (locked)" : done.has(steps[i].key) ? " (complete)" : ""}`);
+    if (i === cur) b.setAttribute("aria-current","step"); else b.removeAttribute("aria-current");
+  });
+}
+function refresh(){
+  const s = cs(), m = M[s.type];
+  if (m) m.render(document.getElementById("interactive"), s, st(s));
+  updateNav();
+  drawSchem();
+  updateFlowBtn();
+  scheduleSave();
+}
+function onHole(id){
+  if (!teacher && !studentName) return;
+  if (testerOn){ testerTap(id); return; }
+  const s = cs(), m = M[s.type];
+  if (m && m.tap){ m.tap(id, s, st(s)); return; }
+  explore(id);
+}
+function render(focusTitle){
+  if (view === "projects") return renderProjects(focusTitle);
+  const s = cs();
+  document.getElementById("count").textContent = `Step ${cur+1} of ${steps.length}`;
+  document.getElementById("stepTitle").textContent = s.title;
+  document.getElementById("notesBody").innerHTML = NOTES[s.title] || "";
+  document.getElementById("stepBody").innerHTML = s.body;
+  document.getElementById("interactive").innerHTML = "";
+  clearMarks(); clearProbes(); clearRings();
+  pressHandler = null;
+  while (gBtnHits.firstChild) gBtnHits.removeChild(gBtnHits.firstChild);
+  const B = benchOf(s); if (B) B.pending = null;
+  if (s.xray) setXray(true);
+  gChip.style.display = s.chip ? "" : "none";
+  pinsShown = !!s.pins;
+  gPinLbl.style.display = pinsShown ? "" : "none";
+  chipT.style.display = pinsShown ? "none" : "";
+  readout.innerHTML = s.readout || "Tap any hole to see what it’s connected to.";
+  if (s.type !== "resistor") resChoice = "r220";
+  setTester(!!s.tester);
+  gSandbox.style.display = B ? "" : "none";
+  drawParts(s.type === "resistor" || !!s.final);
+  applyRoom(null); stopJingle(); stopReading();
+  document.body.classList.remove("print-only");
+  refresh();
+  if (focusTitle) document.getElementById("stepTitle").focus({preventScroll:true});
+}
+prevBtn.onclick = ()=>{ if (cur > 0){ cur--; render(true); } };
+function newSession(){
+  cur = 0; MS = {}; done.clear(); resChoice = "r220";
+  view = "tutorial"; curProj = null; stopJingle();
+  setXray(false); setTester(false);
+}
+nextBtn.onclick = ()=>{
+  if (cur === steps.length - 1) newSession(); else cur++;
+  render(true);
+};
+
+/* ---------- student name ---------- */
+let studentName = "";
+const nameArea = document.getElementById("nameArea");
+const esc = t => t.replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const startOverlay = document.getElementById("startOverlay"), startInput = document.getElementById("startInput");
+const startErr = document.getElementById("startErr"), startCancel = document.getElementById("startCancel");
+const wrapEl = document.querySelector(".wrap");
+let startEditing = false;
+function renderName(){
+  nameArea.innerHTML = studentName ? `<span class="name-tag">Student: ${esc(studentName)}</span><button type="button" id="nameChange">New student</button>` : "";
+  const c = document.getElementById("nameChange");
+  if (c) c.onclick = ()=>openStart(true);
+}
+function openStart(editing){
+  startEditing = !!editing;
+  startInput.value = ""; startErr.textContent = ""; hideResume();
+  startCancel.hidden = !startEditing;
+  document.getElementById("startMsg").textContent = startEditing
+    ? "Type the new student’s first name. This starts a fresh session from step 1."
+    : "Type your first name and press Start to begin.";
+  updateGate();
+}
+function updateGate(){
+  const need = !teacher && (!studentName || startEditing);
+  startOverlay.hidden = !need;
+  wrapEl.inert = need;
+  if (need) wrapEl.setAttribute("aria-hidden", "true"); else wrapEl.removeAttribute("aria-hidden");
+  if (need && document.getElementById("pinOverlay").hidden) startInput.focus();
+}
+const startForm = document.getElementById("startForm"), startResume = document.getElementById("startResume");
+let pendingName = "", pendingSave = null;
+function hideResume(){ startResume.hidden = true; startForm.hidden = false; }
+function beginSession(name, saved){
+  studentName = name; startEditing = false; hideResume();
+  newSession();
+  if (saved) applySave(saved);
+  else { try{ localStorage.removeItem(saveKey(name)); }catch(_){} }
+  renderName(); updateGate(); render(true);
+  readout.innerHTML = saved ? `Welcome back, <b>${esc(studentName)}</b>! Picking up where you left off.`
+    : `Welcome, <b>${esc(studentName)}</b>! Complete each mission to unlock the next step.`;
+}
+startForm.addEventListener("submit", e=>{
+  e.preventDefault();
+  const v = startInput.value.trim().replace(/\s+/g, " ");
+  if (!v){ startErr.textContent = "Please type your first name."; startInput.focus(); return; }
+  const saved = loadSave(v);
+  if (!saved){ beginSession(v, null); return; }
+  pendingName = v; pendingSave = saved;
+  document.getElementById("startMsg").textContent = `Welcome back, ${v}! This computer has your saved progress (${saved.done.length} of 12 missions done).`;
+  startForm.hidden = true; startResume.hidden = false;
+  document.getElementById("resumeBtn").focus();
+});
+document.getElementById("resumeBtn").onclick = ()=>beginSession(pendingName, pendingSave);
+document.getElementById("restartBtn").onclick = ()=>beginSession(pendingName, null);
+document.getElementById("otherNameBtn").onclick = ()=>{ openStart(startEditing); };
+startCancel.onclick = ()=>{ startEditing = false; updateGate(); const c = document.getElementById("nameChange"); if (c) c.focus(); };
+startOverlay.addEventListener("keydown", e=>{ if (e.key === "Escape" && startEditing){ e.preventDefault(); startCancel.click(); } });
+document.getElementById("startTeacher").onclick = ()=>setMode(true);
+renderName();
+
+/* ---------- student and teacher modes ---------- */
+const layout = document.querySelector(".layout");
+const notesEl = document.getElementById("notes"), notesBtn = document.getElementById("notesBtn");
+const fsBtn = document.getElementById("fsBtn"), teacherBar = document.getElementById("teacherBar");
+const studentBtn = document.getElementById("studentBtn"), teacherBtn = document.getElementById("teacherBtn");
+let notesOn = false;
+function setNotes(on){
+  notesOn = on;
+  notesEl.hidden = !(on && teacher);
+  layout.classList.toggle("with-notes", on && teacher);
+  notesBtn.setAttribute("aria-pressed", on ? "true" : "false");
+  notesBtn.textContent = on ? "Hide teacher notes" : "Show teacher notes";
+}
+function setMode(t, fromHash){
+  if (t && !unlocked){ openPin(); return; }
+  if (!t && unlocked) lockTeacher();
+  teacher = t;
+  document.body.classList.toggle("teacher", t);
+  teacherBar.hidden = !t;
+  studentBtn.setAttribute("aria-pressed", t ? "false" : "true");
+  teacherBtn.setAttribute("aria-pressed", t ? "true" : "false");
+  setNotes(notesOn);
+  document.getElementById("notesBody").innerHTML = NOTES[cs().title] || "";
+  if (!fromHash){
+    const h = t ? "#teacher" : "#student";
+    if (location.hash !== h){ try{ history.replaceState(null, "", h); }catch(_){ location.hash = h; } }
+  }
+  updateNav();
+  updateGate();
+}
+studentBtn.onclick = ()=>setMode(false);
+teacherBtn.onclick = ()=>setMode(true);
+notesBtn.onclick = ()=>setNotes(!notesOn);
+window.addEventListener("hashchange", ()=>setMode(location.hash === "#teacher", true));
+if (!document.fullscreenEnabled) fsBtn.hidden = true;
+function toggleFS(){
+  try{ if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); }catch(_){}
+}
+fsBtn.onclick = toggleFS;
+document.addEventListener("fullscreenchange", ()=>{ fsBtn.textContent = document.fullscreenElement ? "Exit full screen" : "Full screen"; });
+document.addEventListener("keydown", e=>{
+  if (!teacher || e.altKey || e.ctrlKey || e.metaKey) return;
+  const tag = (e.target.tagName || "").toLowerCase();
+  if (tag === "input" || tag === "textarea") return;
+  const k = e.key;
+  if (view === "projects" && /^(Arrow|Page)/.test(k)) return;
+  if (k === "ArrowRight" || k === "PageDown"){ if (cur < steps.length - 1){ e.preventDefault(); cur++; render(true); } }
+  else if (k === "ArrowLeft" || k === "PageUp"){ if (cur > 0){ e.preventDefault(); cur--; render(true); } }
+  else if (k === "x" || k === "X") xrayBtn.click();
+  else if (k === "t" || k === "T") testerBtn.click();
+  else if (k === "n" || k === "N") setNotes(!notesOn);
+  else if ((k === "f" || k === "F") && !fsBtn.hidden) toggleFS();
+});
+
+/* ---------- PIN ---------- */
+let unlocked = false, pinWrong = 0, pinLockUntil = 0;
+const fromB64 = t => Uint8Array.from(atob(t), ch=>ch.charCodeAt(0));
+const toB64 = u => btoa(String.fromCharCode(...new Uint8Array(u)));
+async function deriveKey(pin){
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pin), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2", salt:fromB64(LOCKED.salt), iterations:250000, hash:"SHA-256"}, base, {name:"AES-GCM", length:256}, true, ["decrypt"]);
+}
+async function unlockWith(key){
+  try{
+    const pt = await crypto.subtle.decrypt({name:"AES-GCM", iv:fromB64(LOCKED.iv)}, key, fromB64(LOCKED.data));
+    NOTES = JSON.parse(new TextDecoder().decode(pt));
+  }catch(_){ return false; }
+  unlocked = true;
+  try{ sessionStorage.setItem("bb-teacher-key", toB64(await crypto.subtle.exportKey("raw", key))); }catch(_){}
+  return true;
+}
+function lockTeacher(){
+  unlocked = false; NOTES = {};
+  try{ sessionStorage.removeItem("bb-teacher-key"); }catch(_){}
+}
+const pinOverlay = document.getElementById("pinOverlay"), pinInput = document.getElementById("pinInput");
+const pinErr = document.getElementById("pinErr"), pinOk = document.getElementById("pinOk");
+let pinReturn = null;
+function openPin(){
+  pinReturn = document.activeElement;
+  pinErr.textContent = ""; pinInput.value = "";
+  pinOverlay.hidden = false;
+  pinInput.focus();
+}
+function closePin(){
+  pinOverlay.hidden = true;
+  if (pinReturn && pinReturn.focus) pinReturn.focus();
+}
+function cancelPin(){
+  closePin();
+  if (location.hash === "#teacher"){ try{ history.replaceState(null, "", "#student"); }catch(_){ location.hash = "#student"; } }
+  setMode(false, true);
+}
+document.getElementById("pinCancel").onclick = cancelPin;
+pinOverlay.addEventListener("keydown", e=>{
+  if (e.key === "Escape"){ e.preventDefault(); cancelPin(); }
+  if (e.key === "Tab"){
+    const f = [pinInput, pinOk, document.getElementById("pinCancel")];
+    const i = f.indexOf(document.activeElement);
+    if (e.shiftKey && i <= 0){ e.preventDefault(); f[f.length-1].focus(); }
+    else if (!e.shiftKey && i === f.length - 1){ e.preventDefault(); f[0].focus(); }
+  }
+});
+document.getElementById("pinForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const wait = Math.ceil((pinLockUntil - Date.now()) / 1000);
+  if (wait > 0){ pinErr.textContent = `Too many tries. Wait ${wait} seconds.`; return; }
+  const pin = pinInput.value.trim();
+  if (!pin){ pinErr.textContent = "Type the PIN first."; return; }
+  pinOk.disabled = true; pinOk.textContent = "Checking…";
+  let ok = false;
+  try{ ok = await unlockWith(await deriveKey(pin)); }catch(_){}
+  pinOk.disabled = false; pinOk.textContent = "Unlock";
+  if (ok){
+    pinWrong = 0; closePin();
+    if (location.hash !== "#teacher"){ try{ history.replaceState(null, "", "#teacher"); }catch(_){} }
+    setMode(true, true);
+  } else {
+    pinWrong++; pinInput.value = ""; pinInput.focus();
+    if (pinWrong >= 5){ pinWrong = 0; pinLockUntil = Date.now() + 30000; pinErr.textContent = "Too many tries. Wait 30 seconds."; }
+    else pinErr.textContent = "That PIN isn’t right. Try again.";
+  }
+});
+
+if (location.hash === "#quiet") setMuted(true, false);
+updateGate();
+render(false);
+(async ()=>{
+  try{
+    const saved = sessionStorage.getItem("bb-teacher-key");
+    if (saved){
+      const key = await crypto.subtle.importKey("raw", fromB64(saved), "AES-GCM", true, ["decrypt"]);
+      await unlockWith(key);
+    }
+  }catch(_){}
+  setMode(location.hash === "#teacher", true);
+})();
+})();
+</script>
+</body>
+</html>
