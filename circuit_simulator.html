@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Logic Gate Circuit Simulator</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+  /* ---------- Tokens: this page is a circuit board, so it stays dark in both themes ---------- */
+  :root {
+    color-scheme: dark;
+    --board: #0f2a22;          /* PCB green */
+    --board-deep: #0a1d18;
+    --trace: #3c5e52;          /* unlit copper trace, muted */
+    --copper: #c8783a;         /* lit copper */
+    --glow: #ffd166;           /* bulb glow */
+    --on: #3dd68c;
+    --off: #e5484d;
+    --ink: #e9f1ec;
+    --ink-soft: #9fb5ab;
+    --panel: #12332a;
+    --line: #22473c;
+    --focus: #8fd3ff;
+
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  :root[data-theme="light"], :root[data-theme="dark"] { color-scheme: dark; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *, *::before, *::after { box-sizing: inherit; }
+
+  body {
+    margin: 0;
+    font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(ellipse at 50% 0%, #17403390 0%, transparent 60%),
+      repeating-linear-gradient(0deg, transparent 0 23px, #ffffff06 23px 24px),
+      repeating-linear-gradient(90deg, transparent 0 23px, #ffffff06 23px 24px),
+      var(--board);
+    min-height: 100%;
+    line-height: 1.5;
+  }
+
+  .page { max-width: 1040px; margin: 0 auto; padding: 32px 20px 56px; }
+
+  header h1 { font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 600; margin: 0 0 6px; letter-spacing: -0.01em; }
+  header p { margin: 0; color: var(--ink-soft); max-width: 60ch; }
+
+  /* ---------- Gate selector ---------- */
+  .gates { display: flex; flex-wrap: wrap; gap: 10px; margin: 28px 0 20px; }
+  .gate-btn {
+    font: inherit; font-weight: 500; font-size: 0.95rem;
+    color: var(--ink-soft); background: var(--panel);
+    border: 1px solid var(--line); border-radius: 8px;
+    padding: 9px 16px; cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .gate-btn:hover { color: var(--ink); border-color: var(--trace); }
+  .gate-btn[aria-pressed="true"] {
+    color: var(--board-deep); background: var(--copper); border-color: var(--copper);
+  }
+  .gate-btn:focus-visible, .switch:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* ---------- Layout: circuit + truth table ---------- */
+  .bench { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(240px, 1fr); gap: 24px; align-items: start; }
+  @media (max-width: 760px) { .bench { grid-template-columns: 1fr; } }
+
+  .circuit {
+    background: var(--board-deep); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px 18px 10px; overflow: hidden;
+  }
+  .circuit svg { width: 100%; height: auto; display: block; max-width: 100%; }
+
+  .rule { color: var(--ink-soft); margin: 10px 4px 6px; min-height: 1.5em; }
+  .rule strong { color: var(--ink); font-weight: 600; }
+
+  /* ---------- Switches: pill buttons, green = ON, red = OFF ---------- */
+  .switches { display: flex; gap: 14px; flex-wrap: wrap; margin: 8px 4px 6px; }
+  .switch {
+    font: inherit; font-weight: 600; font-size: 0.95rem;
+    display: inline-flex; align-items: center; gap: 10px;
+    border: none; border-radius: 999px; padding: 6px 14px 6px 6px; cursor: pointer;
+    color: #fff; background: var(--off);
+    transition: background .2s, box-shadow .2s;
+    box-shadow: 0 0 0 0 transparent;
+  }
+  .switch .knob {
+    width: 26px; height: 26px; border-radius: 50%; background: #fff;
+    transform: translateX(0); transition: transform .2s;
+    box-shadow: inset 0 -2px 0 #00000030;
+  }
+  .switch[aria-pressed="true"] { background: var(--on); box-shadow: 0 0 18px #3dd68c66; }
+  .switch[aria-pressed="true"] .knob { transform: translateX(6px); }
+  .switch[hidden] { display: none; }
+
+  .sound-btn {
+    font: inherit; font-size: 0.85rem; color: var(--ink-soft);
+    background: transparent; border: 1px solid var(--line); border-radius: 8px;
+    padding: 6px 12px; cursor: pointer; margin-left: auto;
+  }
+  .sound-btn:hover { color: var(--ink); border-color: var(--trace); }
+  .sound-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* ---------- Wires & bulb states (toggled by JS via classes on the SVG) ---------- */
+  .wire { stroke: var(--trace); stroke-width: 6; fill: none; stroke-linecap: round; transition: stroke .2s, filter .2s; }
+  .wire.hot { stroke: var(--copper); filter: drop-shadow(0 0 6px var(--copper)); }
+  .wire.lit { stroke: var(--glow); filter: drop-shadow(0 0 8px var(--glow)); }
+
+  .gate-body { fill: var(--board-deep); stroke: var(--ink-soft); stroke-width: 3; transition: stroke .2s; }
+  .gate-label { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 15px; font-weight: 500; fill: var(--ink); }
+  .pin-label { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 14px; fill: var(--ink-soft); }
+  .bubble { fill: var(--board-deep); stroke: var(--ink-soft); stroke-width: 3; }
+
+  .bulb-glass { fill: #ffffff10; stroke: #b9c7c1; stroke-width: 3; transition: fill .25s, filter .25s; }
+  .bulb-base { fill: #6b7280; stroke: #4b5563; stroke-width: 2; }
+  .bulb-thread { stroke: #374151; stroke-width: 2; }
+  .filament { fill: none; stroke: #6b6b6b; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; transition: stroke .25s, filter .25s; }
+  .halo { fill: var(--glow); opacity: 0; transition: opacity .3s; }
+
+  svg.on .bulb-glass { fill: #ffd16640; filter: drop-shadow(0 0 22px var(--glow)); }
+  svg.on .filament { stroke: #fff2b3; filter: drop-shadow(0 0 5px var(--glow)); }
+  svg.on .halo { opacity: .18; }
+
+  /* ---------- Truth table ---------- */
+  .table-card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; overflow-x: auto; }
+  .table-card h2 { font-size: 1rem; font-weight: 600; margin: 0 0 10px; }
+  table { border-collapse: collapse; width: 100%; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.95rem; }
+  th, td { text-align: center; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+  th { color: var(--ink-soft); font-weight: 500; }
+  tbody tr { transition: background .2s; }
+  tbody tr.active { background: #c8783a2e; outline: 1px solid var(--copper); border-radius: 6px; }
+  td.one { color: var(--on); }
+  td.zero { color: var(--off); }
+  .legend { color: var(--ink-soft); font-size: 0.85rem; margin: 10px 0 0; }
+
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>Logic Gate Circuit Simulator</h1>
+    <p>Pick a gate, flip the switches, and watch the bulb. The matching row of the truth table lights up with it.</p>
+  </header>
+
+  <!-- 1. Gate selector -->
+  <div class="gates" role="group" aria-label="Choose a gate" id="gates">
+    <button class="gate-btn" data-gate="AND"  aria-pressed="true">AND</button>
+    <button class="gate-btn" data-gate="OR"   aria-pressed="false">OR</button>
+    <button class="gate-btn" data-gate="NOT"  aria-pressed="false">NOT</button>
+    <button class="gate-btn" data-gate="NAND" aria-pressed="false">NAND</button>
+    <button class="gate-btn" data-gate="NOR"  aria-pressed="false">NOR</button>
+    <button class="gate-btn" data-gate="XOR"  aria-pressed="false">XOR</button>
+  </div>
+
+  <div class="bench">
+    <!-- 2. Circuit area -->
+    <section class="circuit" aria-label="Circuit">
+      <svg id="board" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="boardTitle">
+        <title id="boardTitle">Circuit diagram</title>
+
+        <!-- Input wires: switch → gate -->
+        <path id="wireA" class="wire" d="M 40 110 H 170 Q 185 110 185 125 V 135 H 240"/>
+        <path id="wireB" class="wire" d="M 40 190 H 170 Q 185 190 185 175 V 165 H 240"/>
+        <!-- Output wire: gate → bulb -->
+        <path id="wireOut" class="wire" d="M 395 150 H 500"/>
+
+        <!-- Input pins -->
+        <circle cx="40" cy="110" r="9" fill="var(--board-deep)" stroke="var(--ink-soft)" stroke-width="3"/>
+        <circle cx="40" cy="190" r="9" fill="var(--board-deep)" stroke="var(--ink-soft)" stroke-width="3"/>
+        <text class="pin-label" x="22" y="90">A</text>
+        <text class="pin-label" x="22" y="224" id="pinB">B</text>
+
+        <!-- Gate symbols: one group per shape, JS shows the right one -->
+        <g id="sym-AND">
+          <path class="gate-body" d="M 240 110 H 300 A 40 40 0 0 1 300 190 H 240 Z"/>
+        </g>
+        <g id="sym-OR" hidden>
+          <path class="gate-body" d="M 240 110 Q 265 150 240 190 Q 300 190 345 150 Q 300 110 240 110 Z"/>
+        </g>
+        <g id="sym-NOT" hidden>
+          <path class="gate-body" d="M 240 110 L 330 150 L 240 190 Z"/>
+        </g>
+        <g id="sym-XOR" hidden>
+          <path class="gate-body" d="M 228 110 Q 253 150 228 190" fill="none"/>
+          <path class="gate-body" d="M 240 110 Q 265 150 240 190 Q 300 190 345 150 Q 300 110 240 110 Z"/>
+        </g>
+        <!-- Inversion bubble, shown for NOT / NAND / NOR -->
+        <circle id="bubble" class="bubble" cx="356" cy="150" r="9" hidden/>
+        <text id="gateLabel" class="gate-label" x="285" y="155" text-anchor="middle">AND</text>
+
+        <!-- Light bulb: halo, globe, filament, base -->
+        <circle class="halo" cx="560" cy="120" r="80"/>
+        <path class="bulb-glass" d="M 560 70 a 45 45 0 0 1 28 80 l -8 14 h -40 l -8 -14 a 45 45 0 0 1 28 -80 Z"/>
+        <!-- Zigzag filament -->
+        <polyline class="filament" points="546,164 546,138 552,128 558,138 564,128 570,138 574,164"/>
+        <rect class="bulb-base" x="534" y="164" width="52" height="34" rx="4"/>
+        <line class="bulb-thread" x1="534" y1="174" x2="586" y2="174"/>
+        <line class="bulb-thread" x1="534" y1="184" x2="586" y2="184"/>
+        <path class="bulb-base" d="M 540 198 h 40 l -6 10 h -28 Z"/>
+      </svg>
+
+      <div class="switches">
+        <button class="switch" id="swA" aria-pressed="false" aria-label="Input A"><span class="knob"></span><span class="txt">A: OFF</span></button>
+        <button class="switch" id="swB" aria-pressed="false" aria-label="Input B"><span class="knob"></span><span class="txt">B: OFF</span></button>
+        <button class="sound-btn" id="soundBtn" aria-pressed="true">Sound on</button>
+      </div>
+      <p class="rule" id="rule"></p>
+    </section>
+
+    <!-- 3. Truth table -->
+    <aside class="table-card">
+      <h2 id="tableTitle">AND truth table</h2>
+      <table id="truth">
+        <thead><tr id="truthHead"><th>A</th><th>B</th><th>Out</th></tr></thead>
+        <tbody id="truthBody"></tbody>
+      </table>
+      <p class="legend">1 = ON, 0 = OFF. The highlighted row is the current switch setting.</p>
+    </aside>
+  </div>
+</div>
+
+<script>
+  // ---------- Step 4: the logic ----------
+  function getOutput(gate, a, b) {
+    if (gate === "AND")  return a && b;
+    if (gate === "OR")   return a || b;
+    if (gate === "NOT")  return !a;
+    if (gate === "NAND") return !(a && b);
+    if (gate === "NOR")  return !(a || b);
+    if (gate === "XOR")  return a !== b;
+  }
+
+  const RULES = {
+    AND:  "ON only if both A and B are ON",
+    OR:   "ON if either A or B is ON",
+    NOT:  "Flips the input: ON becomes OFF, OFF becomes ON",
+    NAND: "Opposite of AND: OFF only when both are ON",
+    NOR:  "Opposite of OR: ON only when both are OFF",
+    XOR:  "ON if the inputs are different"
+  };
+  // Which drawn symbol each gate uses, and whether it gets an inversion bubble
+  const SYMBOL = { AND: "AND", NAND: "AND", OR: "OR", NOR: "OR", XOR: "XOR", NOT: "NOT" };
+  const INVERTED = { NAND: true, NOR: true, NOT: true };
+
+  // ---------- State ----------
+  let gate = "AND";
+  let a = false;
+  let b = false;
+
+  // ---------- Element handles ----------
+  const board = document.getElementById("board");
+  const swA = document.getElementById("swA");
+  const swB = document.getElementById("swB");
+  const wireA = document.getElementById("wireA");
+  const wireB = document.getElementById("wireB");
+  const wireOut = document.getElementById("wireOut");
+  const bubble = document.getElementById("bubble");
+  const gateLabel = document.getElementById("gateLabel");
+  const pinB = document.getElementById("pinB");
+  const rule = document.getElementById("rule");
+  const truthBody = document.getElementById("truthBody");
+  const truthHead = document.getElementById("truthHead");
+  const tableTitle = document.getElementById("tableTitle");
+
+  // ---------- Step 5: connect everything ----------
+  function render() {
+    const twoInputs = gate !== "NOT";
+    const out = getOutput(gate, a, b);
+
+    // Switches
+    setSwitch(swA, "A", a);
+    setSwitch(swB, "B", b);
+    swB.hidden = !twoInputs;
+
+    // Gate symbol
+    for (const name of ["AND", "OR", "NOT", "XOR"]) {
+      document.getElementById("sym-" + name).hidden = SYMBOL[gate] !== name;
+    }
+    bubble.hidden = !INVERTED[gate];
+    gateLabel.textContent = gate;
+    gateLabel.setAttribute("x", gate === "NOT" ? 270 : 285);
+
+    // Wires: input wires glow copper when their input is ON; output wire glows when the bulb is lit
+    wireA.classList.toggle("hot", a);
+    wireB.classList.toggle("hot", twoInputs && b);
+    wireB.style.opacity = twoInputs ? 1 : 0;
+    wireOut.classList.toggle("lit", out);
+    pinB.style.opacity = twoInputs ? 1 : 0;
+
+    // Bulb
+    board.classList.toggle("on", out);
+
+    // Rule text and truth table
+    rule.innerHTML = `<strong>${gate}:</strong> ${RULES[gate]}. Right now the output is <strong>${out ? "ON" : "OFF"}</strong>.`;
+    buildTruthTable(twoInputs);
+    highlightRow(twoInputs);
+  }
+
+  function setSwitch(el, name, on) {
+    el.setAttribute("aria-pressed", String(on));
+    el.querySelector(".txt").textContent = `${name}: ${on ? "ON" : "OFF"}`;
+  }
+
+  function buildTruthTable(twoInputs) {
+    tableTitle.textContent = `${gate} truth table`;
+    truthHead.innerHTML = twoInputs ? "<th>A</th><th>B</th><th>Out</th>" : "<th>A</th><th>Out</th>";
+    truthBody.innerHTML = "";
+    const combos = twoInputs
+      ? [[false, false], [false, true], [true, false], [true, true]]
+      : [[false], [true]];
+    for (const inputs of combos) {
+      const tr = document.createElement("tr");
+      const out = getOutput(gate, inputs[0], inputs[1]);
+      const cells = [...inputs, out];
+      for (const v of cells) {
+        const td = document.createElement("td");
+        td.textContent = v ? "1" : "0";
+        td.className = v ? "one" : "zero";
+        tr.appendChild(td);
+      }
+      truthBody.appendChild(tr);
+    }
+  }
+
+  function highlightRow(twoInputs) {
+    // Rows are listed in binary order, so the index is just the inputs read as a binary number
+    const index = twoInputs ? (a ? 2 : 0) + (b ? 1 : 0) : (a ? 1 : 0);
+    [...truthBody.rows].forEach((row, i) => row.classList.toggle("active", i === index));
+  }
+
+  // ---------- Sound: a synthesized switch click, no audio files needed ----------
+  // Web Audio can only start after the user interacts with the page, so the
+  // AudioContext is created lazily on the first click.
+  let audioCtx = null;
+  let soundOn = true;
+
+  function playClick(turningOn) {
+    if (!soundOn) return;
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+
+    const now = audioCtx.currentTime;
+
+    // Part 1: a short burst of noise — the "snap" of the switch
+    const length = Math.floor(audioCtx.sampleRate * 0.03);
+    const buffer = audioCtx.createBuffer(1, length, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < length; i++) {
+      data[i] = (Math.random() * 2 - 1) * (1 - i / length); // fades out quickly
+    }
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = buffer;
+    const noiseGain = audioCtx.createGain();
+    noiseGain.gain.setValueAtTime(0.25, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+    noise.connect(noiseGain).connect(audioCtx.destination);
+    noise.start(now);
+
+    // Part 2: a tiny pitched tick — higher when switching ON, lower when OFF
+    const osc = audioCtx.createOscillator();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(turningOn ? 1800 : 1100, now);
+    osc.frequency.exponentialRampToValueAtTime(turningOn ? 900 : 500, now + 0.04);
+    const oscGain = audioCtx.createGain();
+    oscGain.gain.setValueAtTime(0.12, now);
+    oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    osc.connect(oscGain).connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.06);
+  }
+
+  const soundBtn = document.getElementById("soundBtn");
+  soundBtn.addEventListener("click", () => {
+    soundOn = !soundOn;
+    soundBtn.setAttribute("aria-pressed", String(soundOn));
+    soundBtn.textContent = soundOn ? "Sound on" : "Sound off";
+  });
+
+  // ---------- Events ----------
+  swA.addEventListener("click", () => { a = !a; playClick(a); render(); });
+  swB.addEventListener("click", () => { b = !b; playClick(b); render(); });
+
+  document.getElementById("gates").addEventListener("click", (e) => {
+    const btn = e.target.closest(".gate-btn");
+    if (!btn) return;
+    gate = btn.dataset.gate;
+    document.querySelectorAll(".gate-btn").forEach(g => g.setAttribute("aria-pressed", String(g === btn)));
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>
